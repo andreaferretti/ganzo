@@ -29,7 +29,7 @@ class StandardGame:
             noise = noiseloader.next().to(self.device)
             noise.requires_grad_(True)
             fake_data = self.generator(noise)
-            generator_loss = self.discriminator(fake_data).mean()
+            generator_loss = self.loss.for_generator(fake_data)
             generator_loss.backward()
 
             self.generator_optimizer.step()
@@ -44,7 +44,7 @@ class StandardGame:
             real_data, labels = dataloader.next()
             real_data = real_data.to(self.device)
             labels = labels.to(self.device)
-            discriminator_loss = self.loss.run(real_data, fake_data, labels)
+            discriminator_loss = self.loss.for_discriminator(real_data, fake_data, labels)
             discriminator_loss.backward()
 
             self.discriminator_optimizer.step()

@@ -27,7 +27,11 @@ class GANLoss:
         else:
             return torch.ones(self.batch_size, 1)
 
-    def run(self, real_data, fake_data, labels=None):
+    def for_generator(self, fake_data, labels=None):
+        real_labels = self.real_labels()
+        return self.criterion(self.discriminator(fake_data), real_labels)
+
+    def for_discriminator(self, real_data, fake_data, labels=None):
         if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
             real_labels = self.fake_labels()
         else:
@@ -74,7 +78,10 @@ class WGANGPLoss:
         gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * self.gradient_penalty_factor
         return gradient_penalty
 
-    def run(self, real_data, fake_data, labels=None):
+    def for_generator(self, fake_data, labels=None):
+        return self.discriminator(fake_data).mean()
+
+    def for_discriminator(self, real_data, fake_data, labels=None):
         real = self.discriminator(real_data).mean()
         fake = self.discriminator(fake_data).mean()
         penalty = self.gradient_penalty(critic, real_data, fake_data)
