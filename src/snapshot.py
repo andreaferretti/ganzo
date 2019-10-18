@@ -1,4 +1,5 @@
 import os
+import math
 
 import torchvision
 
@@ -15,6 +16,7 @@ class FolderSnapshot:
         self.image_colors = options.image_colors
         self.sample_every = options.sample_every
         self.snapshot_size = options.snapshot_size
+        self.nrows = int(math.sqrt(self.snapshot_size))
         self.epoch = 1
         self.noise = None
         self.sample_from_fixed_noise = options.sample_from_fixed_noise
@@ -28,10 +30,10 @@ class FolderSnapshot:
                 noise = self.noise
             else:
                 noise = noiseloader.next()[:self.snapshot_size]
-            samples = generator(noise).view(self.batch_size, self.image_colors, self.image_size, self.image_size)
+            samples = generator(noise).view(self.snapshot_size, self.image_colors, self.image_size, self.image_size)
             samples = samples * 0.5 + 0.5
 
-            torchvision.utils.save_image(samples, os.path.join(self.base_dir, f'epoch_{self.epoch}.png'), nrow=8, padding=2)
+            torchvision.utils.save_image(samples, os.path.join(self.base_dir, f'epoch_{self.epoch}.png'), nrow=self.nrows, padding=2)
         self.epoch += 1
 
 class Snapshot:

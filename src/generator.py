@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -37,7 +39,8 @@ class Generator:
         else:
             raise RegistryError(f'missing value {options.generator} for namespace `generator`')
         if options.restore:
-            pass
+            state_dict = torch.load(os.path.join(options.model_dir, options.experiment, 'generator.pt'))
+            generator.load_state_dict(state_dict)
         generator = generator.to(options.device)
         return generator
 

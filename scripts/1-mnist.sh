@@ -23,5 +23,4 @@ python src/ganzo.py \
   --noisy-labels \
   --epochs 10000 \
   --sample-every 100 \
-  --sample-from-fixed-noise \
-  --delete
+  --sample-from-fixed-noise

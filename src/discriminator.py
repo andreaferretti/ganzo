@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,7 +43,8 @@ class Discriminator:
         else:
             raise RegistryError(f'missing value {options.discriminator} for namespace `discriminator`')
         if options.restore:
-            pass
+            state_dict = torch.load(os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))
+            discriminator.load_state_dict(state_dict)
         discriminator = discriminator.to(options.device)
         return discriminator
 
