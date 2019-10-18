@@ -12,13 +12,12 @@ class FCDiscriminator(nn.Module):
     def __init__(self, options):
         super(FCDiscriminator, self).__init__()
         self.dropout = options.discriminator_dropout
-        self.batch_size = options.batch_size
 
         size = options.state_size * (2 ** (options.discriminator_layers - 1))
         self.linear = []
         self.linear.append(nn.Linear(options.image_size * options.image_size, size))
-        self.add_module(f'linear_0', self.linear[0])
-        for i in range(1, options.generator_layers - 1):
+        self.add_module('linear_0', self.linear[0])
+        for i in range(1, options.discriminator_layers - 1):
             self.linear.append(nn.Linear(size, size // 2))
             self.add_module(f'linear_{i}', self.linear[i])
             size //= 2
@@ -26,13 +25,47 @@ class FCDiscriminator(nn.Module):
         self.add_module(f'linear_{options.discriminator_layers - 1}', self.linear[-1])
 
     def forward(self, x):
-        x = x.view(self.batch_size, -1)
+        batch_size = x.size()[0]
+        x = x.view(batch_size, -1)
         for layer in self.linear[:-1]:
             x = F.leaky_relu(layer(x), 0.2)
             if self.dropout is not None:
                 x = F.dropout(x, self.dropout)
         x = self.linear[-1](x)
         return torch.sigmoid(x)
+
+@register('discriminator', 'conv')
+class ConvDiscriminator(nn.Module):
+    def __init__(self, options):
+        super(ConvDiscriminator, self).__init__()
+        self.dropout = options.discriminator_dropout
+
+        self.conv = []
+        self.batch_norm = []
+        d = 8
+
+        self.conv.append(nn.Conv2d(options.image_colors, d, kernel_size=4, stride=2, padding=1))
+        self.batch_norm.append(nn.BatchNorm2d(d))
+        self.add_module('conv_0', self.conv[0])
+        self.add_module('batch_norm_0', self.batch_norm[0])
+        for i in range(1, options.discriminator_layers - 1):
+            self.conv.append(nn.Conv2d(d, 2 * d, kernel_size=4, stride=2, padding=1))
+            self.batch_norm.append(nn.BatchNorm2d(2 * d))
+            self.add_module(f'conv_{i}', self.conv[i])
+            self.add_module(f'batch_norm_{i}', self.batch_norm[i])
+            d *= 2
+        self.conv.append(nn.Conv2d(d, 1, kernel_size=4, stride=1, padding=0))
+        self.add_module(f'conv_{options.discriminator_layers - 1}', self.conv[-1])
+
+    def forward(self, x):
+        batch_size = x.size()[0]
+        for conv, batch_norm in zip(self.conv, self.batch_norm):
+            x = batch_norm(conv(x))
+            x = F.leaky_relu(x, 0.2)
+            if self.dropout is not None:
+                x = F.dropout(x, self.dropout)
+        x = self.conv[-1](x)
+        return torch.sigmoid(x).view(batch_size, -1)
 
 class Discriminator:
     @staticmethod
