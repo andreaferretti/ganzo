@@ -13,22 +13,29 @@ class GANLoss:
         self.batch_size = options.batch_size
         self.soft_labels = options.soft_labels
         self.noisy_labels = options.noisy_labels
+        self.noisy_labels_frequency = options.noisy_labels_frequency
 
     def real_labels(self):
         if self.soft_labels:
-            return torch.FloatTensor(self.batch_size).uniform_(0.9, 1)
+            return torch.FloatTensor(self.batch_size, 1).uniform_(0.9, 1)
         else:
-            return torch.ones(self.batch_size)
+            return torch.ones(self.batch_size, 1)
 
     def fake_labels(self):
         if self.soft_labels:
-            return torch.FloatTensor(self.batch_size).uniform_(0, 0.1)
+            return torch.FloatTensor(self.batch_size, 1).uniform_(0, 0.1)
         else:
-            return torch.ones(self.batch_size)
+            return torch.ones(self.batch_size, 1)
 
     def run(self, real_data, fake_data, labels=None):
-        real_labels = self.real_labels()
-        fake_labels = self.fake_labels()
+        if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
+            real_labels = self.fake_labels()
+        else:
+            real_labels = self.real_labels()
+        if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
+            fake_labels = self.real_labels()
+        else:
+            fake_labels = self.fake_labels()
         real = self.criterion(self.discriminator(real_data), real_labels)
         fake = self.criterion(self.discriminator(fake_data), fake_labels)
         return real + fake
@@ -89,3 +96,4 @@ class Loss:
         group.add_argument('--gradient-penalty-factor', type=float, default=10, help='gradient penalty factor (lambda in WGAN-GP)')
         group.add_argument('--soft-labels', action='store_true', help='use soft labels in GAN loss')
         group.add_argument('--noisy-labels', action='store_true', help='use noisy labels in GAN loss')
+        group.add_argument('--noisy-labels-frequency', type=float, default=0.1, help='how often to use noisy labels in GAN loss')
