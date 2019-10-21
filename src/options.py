@@ -12,6 +12,7 @@ from loss import Loss
 from noise import Noise
 from statistics import Statistics
 from snapshot import Snapshot
+from evaluation import Evaluation
 from game import Game
 from registry import Registry
 
@@ -37,6 +38,7 @@ class Options:
         Noise.add_options(self.parser)
         Statistics.add_options(self.parser)
         Snapshot.add_options(self.parser)
+        Evaluation.add_options(self.parser)
         Game.add_options(self.parser)
         for f in Registry.option_functions():
             f(self.parser)
@@ -50,7 +52,6 @@ class Options:
                 options.device = 'cuda'
             else:
                 options.device = 'cpu'
-        # options.device = torch.device(options.device)
 
         return options
 

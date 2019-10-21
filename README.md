@@ -103,12 +103,15 @@ loss = Loss.from_options(options, discriminator)
 noise = Noise.from_options(options)
 statistics = Statistics.from_options(options)
 snapshot = Snapshot.from_options(options)
+evaluation = Evaluation.from_options(options)
 game = Game.from_options(options, generator, discriminator, loss)
 
 for _ in range(options.epochs):
     losses = game.run_epoch(data, noise)
     statistics.log(losses)
     snapshot.save(data, noise, generator)
+    if evaluation.has_improved(losses):
+        # save models
 ```
 
 You can write your own training script by adapting this basic structure. It
@@ -162,6 +165,8 @@ The module `data` exports the following options:
 ### Statistics
 
 ### Snapshot
+
+### Evaluation
 
 ### Game
 

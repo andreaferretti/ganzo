@@ -1,6 +1,5 @@
 import os
 import sys
-import math
 
 import torch
 
@@ -11,6 +10,7 @@ from loss import Loss
 from noise import Noise
 from statistics import Statistics
 from snapshot import Snapshot
+from evaluation import Evaluation
 from game import Game
 from options import Options
 
@@ -60,14 +60,13 @@ if __name__ == '__main__':
     noise = Noise.from_options(options)
     statistics = Statistics.from_options(options)
     snapshot = Snapshot.from_options(options)
+    evaluation = Evaluation.from_options(options)
     game = Game.from_options(options, generator, discriminator, loss)
 
-    best_loss = math.inf
     for _ in range(options.epochs):
         losses = game.run_epoch(data, noise)
         statistics.log(losses)
         snapshot.save(data, noise, generator)
-        if losses['generator'] < best_loss:
-            best_loss = losses['generator']
+        if evaluation.has_improved(losses):
             torch.save(generator.state_dict(), os.path.join(options.model_dir, options.experiment, 'generator.pt'))
             torch.save(discriminator.state_dict(), os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))
