@@ -167,4 +167,92 @@ The module `data` exports the following options:
 
 ## Extending Ganzo
 
+Ganzo can be extended by defining your custom modules. To do this, you do not
+need to write your training script (although this is certainly doable). If
+you want to define custom components and let Ganzo take advantage of them,
+you need to follow four steps:
+
+* write your custom component (this can a be a data loader, a generator, a
+  loss function...). You will need to make sure that it can be initialized
+  via an `option` object and that it exposes the same public methods
+  as the other classes (for instance, a loss function exposes two public methods
+  `def for_generator(self, fake_data, labels=None)` and `def for_discriminator(self, real_data, fake_data, labels=None)`)
+* let Ganzo be aware of your component by registering it
+* add an enviroment variable to make Ganzo find your module
+* optionally, add your custom options to the argument parser.
+
+To make this possible, Ganzo uses a registry, that can be found under
+`registry.py`. This exports the `Registry` singleton and the `register`
+decorator function (also, the `RegistryException` class, which you should not
+need).
+
+### Custom components and the registry
+
+When you write your custom component, you need to register it in the
+correct namespace. This can be done with the `Registry.add` function, or
+more simply with the `register` decorator. In both cases you will need to
+provide the namespace (e.g. `loss` for a loss function) and the name of your
+component (this is your choice, just make sure not to collide with existing
+names). For instance, registering a `CustomLoss` class can be done like this:
+
+```python
+from registry import register
+
+@register('loss', 'custom-loss')
+class CustomLoss:
+    # make sure that your __init__ method has the same signature
+    # as the existing components
+    def __init__(self, options, discriminator):
+        # initialization logic here
+
+    # more class logic here, for instance the public API
+    def for_generator(self, fake_data, labels=None):
+        pass
+
+    def for_discriminator(self, real_data, fake_data, labels=None):
+        pass
+```
+
+This can also be done more explicitly by adding your class to the registry:
+
+```python
+from registry import Registry
+
+class CustomLoss:
+    # make sure that your __init__ method has the same signature
+    # as the existing components
+    def __init__(self, options, discriminator):
+        # initialization logic here
+
+    # more class logic here, for instance the public API
+    def for_generator(self, fake_data, labels=None):
+        pass
+
+    def for_discriminator(self, real_data, fake_data, labels=None):
+        pass
+
+Registry.add('loss', 'custom-loss', CustomLoss)
+```
+
+### Finding your module
+
+Of course, at this point Ganzo is not aware that your module exists, or that
+it defines and register new components. You need to make sure that Ganzo
+actually imports your module, so that your custom logic is run. This cannot
+be done with a flag on the command line: the reason is that you are able to
+add custom options to the argument parser, so your modules must be found
+**before** reading the command line options.
+
+To do this, we use an environment variable `GANZO_LOAD_MODULES`, which
+should contain a comma-separated list of python modules that you want to
+import before Ganzo starts. These modules should be on the Python path, so
+that they can be imported by name. For instance, if you have defined your loss
+inside `custom.py`, you can call Ganzo like this:
+
+```
+GANZO_LOAD_MODULES=custom python src/ganzo.py # more options here
+```
+
+### Customizing options
+
 ## Using Ganzo as a library
