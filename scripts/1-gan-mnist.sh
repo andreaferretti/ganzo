@@ -21,6 +21,6 @@ python src/ganzo.py \
   --discriminator-lr 0.0002 \
   --soft-labels \
   --noisy-labels \
-  --epochs 10000 \
-  --sample-every 100 \
+  --epochs 100 \
+  --sample-every 1 \
   --sample-from-fixed-noise

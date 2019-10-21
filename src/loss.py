@@ -50,7 +50,7 @@ class GANLoss:
 @register('loss', 'wgan-gp')
 class WGANGPLoss:
     def __init__(self, options, discriminator):
-        self.device = options.device
+        self.device = torch.device(options.device)
         self.gradient_penalty_factor = options.gradient_penalty_factor
         self.discriminator = discriminator
 

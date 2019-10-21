@@ -37,11 +37,10 @@ class SingleImage:
         self.iterator = iter(self.dataloader)
 
     def next(self):
-        batch = next(self.iterator, None)
-        if batch is None:
-            self.iterator = iter(self.dataloader)
-            batch = self.iterator.next()
-        return batch
+        return next(self.iterator, None)
+
+    def reset(self):
+        self.iterator = iter(self.dataloader)
 
 class Data:
     @staticmethod

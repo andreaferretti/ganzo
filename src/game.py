@@ -9,6 +9,7 @@ class StandardGame:
         self.loss = loss
         self.generator_iterations = options.generator_iterations
         self.discriminator_iterations = options.discriminator_iterations
+        self.max_batches_per_epoch = options.max_batches_per_epoch
         self.generator_optimizer = torch.optim.Adam(
             generator.parameters(),
             lr=options.generator_lr,
@@ -21,33 +22,46 @@ class StandardGame:
         )
 
     def run_epoch(self, dataloader, noiseloader):
-        for p in self.discriminator.parameters():
-            p.requires_grad_(False)
+        dataloader.reset()
 
-        for _ in range(self.generator_iterations):
-            self.generator.zero_grad()
-            noise = noiseloader.next().to(self.device)
-            noise.requires_grad_(True)
-            fake_data = self.generator(noise)
-            generator_loss = self.loss.for_generator(fake_data)
-            generator_loss.backward()
+        count = 0
+        keep_going = True
+        while keep_going:
+            for p in self.discriminator.parameters():
+                p.requires_grad_(False)
 
-            self.generator_optimizer.step()
+            for _ in range(self.generator_iterations):
+                self.generator.zero_grad()
+                noise = noiseloader.next().to(self.device)
+                noise.requires_grad_(True)
+                fake_data = self.generator(noise)
+                generator_loss = self.loss.for_generator(fake_data)
+                generator_loss.backward()
 
-        for p in self.discriminator.parameters():
-            p.requires_grad_(True)
+                self.generator_optimizer.step()
 
-        for _ in range(self.discriminator_iterations):
-            self.discriminator.zero_grad()
-            noise = noiseloader.next().to(self.device)
-            fake_data = self.generator(noise).detach()
-            real_data, labels = dataloader.next()
-            real_data = real_data.to(self.device)
-            labels = labels.to(self.device)
-            discriminator_loss = self.loss.for_discriminator(real_data, fake_data, labels)
-            discriminator_loss.backward()
+            for p in self.discriminator.parameters():
+                p.requires_grad_(True)
 
-            self.discriminator_optimizer.step()
+            for _ in range(self.discriminator_iterations):
+                self.discriminator.zero_grad()
+                noise = noiseloader.next().to(self.device)
+                fake_data = self.generator(noise).detach()
+                minibatch = dataloader.next()
+                if minibatch is None: # end of batch
+                    keep_going = False
+                    break
+                real_data, labels = minibatch
+                real_data = real_data.to(self.device)
+                labels = labels.to(self.device)
+                discriminator_loss = self.loss.for_discriminator(real_data, fake_data, labels)
+                discriminator_loss.backward()
+
+                self.discriminator_optimizer.step()
+
+            count += 1
+            if self.max_batches_per_epoch is not None and count >= self.max_batches_per_epoch:
+                keep_going = False
 
         return {
             'generator': generator_loss,
@@ -68,3 +82,4 @@ class Game:
         group.add_argument('--discriminator-lr', type=float, default=1e-4, help='learning rate for the discriminator')
         group.add_argument('--beta1', type=float, default=0, help='first beta')
         group.add_argument('--beta2', type=float, default=0.9, help='second beta')
+        group.add_argument('--max-batches-per-epoch', type=int, help='maximum number of minibatches per epoch')
