@@ -26,6 +26,16 @@ conda create -n ganzo python=3.7 pytorch torchvision -c pytorch
 If available, Ganzo supports [TensorBoardX](https://github.com/lanpa/tensorboardX).
 This is detected at runtime, so Ganzo can run with or without it.
 
+If you want to use [LMDB]https://lmdb.readthedocs.io/) datasets such as
+[LSUN](https://github.com/fyu/lsun), you will also need that dependency:
+
+```
+conda install python-lmdb
+```
+
+To download the LSUN image dataset, use the instructions in the linked
+repository.
+
 ## Running
 
 Ganzo can be used either from the command line or as a library. Each
@@ -60,6 +70,50 @@ Some options are global in nature:
 
 ## Architecture
 
+Ganzo is structured into modules that handles different concerns: data loading,
+generators, discriminators, loss functions and so on. Each of these modules
+defines some classes that can be exported and used on their own, or can be
+used fully through configuration, for instance from a JSON file.
+
+To do so, each module defines a main class (for instance, `loss.Loss`, or
+`data.Data`), that has two static methods:
+
+* `from_options(options, *args)` initializes a class from an object representing
+  the options. This object is a [argparse.Namespace](https://docs.python.org/3/library/argparse.html#the-namespace-object) object that is obtained by parsing
+  command line options or JSON configuration files. Most classes only require
+  the `options` object in order to be instantiated, but in some cases, other
+  arguments are passed in as well -- for instance the loss function requires
+  the discriminator in order to compute generator loss.
+* `add_options(parser)` takes as input an [argparse.ArgumentParser](https://docs.python.org/3/library/argparse.html#argumentparser-objects)
+  object, and adds a set of arguments that are relevant to the specific module.
+  This is typically done by adding an argument group. Of course, options are
+  not constrained to be used by the module that introduces them: for instance,
+  `data.Data` adds the argument `batch-size`, that is used by many other modules.
+
+Having each module defined by configuration allows Ganzo to wire them without
+knowing much of the specifics. The main loop run at training time looks like
+this:
+
+```python
+data = Data.from_options(options)
+generator = Generator.from_options(options)
+discriminator = Discriminator.from_options(options)
+loss = Loss.from_options(options, discriminator)
+noise = Noise.from_options(options)
+statistics = Statistics.from_options(options)
+snapshot = Snapshot.from_options(options)
+game = Game.from_options(options, generator, discriminator, loss)
+
+for _ in range(options.epochs):
+    losses = game.run_epoch(data, noise)
+    statistics.log(losses)
+    snapshot.save(data, noise, generator)
+```
+
+You can write your own training script by adapting this basic structure. It
+should be easy: the source of `ganzo.py` is less than 100 lines, most of which
+deal with handling the case of restoring a training session.
+
 ## Components
 
 ### Data
@@ -78,6 +132,6 @@ Some options are global in nature:
 
 ### Game
 
-## Custom components
+## Extending Ganzo
 
 ## Using Ganzo as a library
