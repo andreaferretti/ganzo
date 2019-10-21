@@ -7,11 +7,11 @@ from registry import Registry, RegistryError, register
 @register('data', 'single-image', default=True)
 class SingleImage:
     def __init__(self, options):
-        transform_list = [
-            transforms.Resize((options.image_size, options.image_size)),
-            transforms.CenterCrop(options.image_size), #redundant?
-            transforms.ToTensor()
-        ]
+        transform_list = []
+        if options.image_size is not None:
+            transform_list.append(transforms.Resize((options.image_size, options.image_size)))
+            # transform_list.append(transforms.CenterCrop(options.image_size))
+        transform_list.append(transforms.ToTensor())
         if options.image_colors == 1:
             transform_list.append(transforms.Normalize(mean=[0.5], std=[0.5]))
         elif options.image_colors == 3:

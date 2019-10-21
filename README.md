@@ -1,4 +1,5 @@
-# Ganzo
+Ganzo
+=====
 
 Ganzo is a framework to implement, train and run different types of
 [GANs](https://en.wikipedia.org/wiki/Generative_adversarial_network),
@@ -116,7 +117,39 @@ deal with handling the case of restoring a training session.
 
 ## Components
 
+The following goes in detail about the various components defined by Ganzo:
+their role, the classes that they export, and the options that they provide
+for configuration.
+
 ### Data
+
+This module handles the loading of the image datasets.
+
+Datasets can come in various formats: single image datasets (with or without a
+labeling) and datasets of input/output pairs. A single image dataset can be used
+to train a standard GAN, while having the labels can be used for conditioned
+GANs. Datasets of pairs can be used for tasks of image to image translation,
+such as super resolution or colorization.
+
+Also, datasets can be stored in different ways. The simplest one is a folder
+containing images, possibly split into subfolders representing categories. But
+some datasets are stored in a custom way - for instance MNIST or LSUN.
+
+The module `data` defines the following classes:
+
+* `SingleImageData` TODO describe it
+
+The module `data` exports the following options:
+
+* `data-format`: the format of the dataset, such as `single-image`
+* `data-dir`: the (input) directory where the images are stored
+* `dataset`: the type of dataset, such as `folder`, `mnist` or `lsun`
+* `image-class`: this can be used to filter the dataset, by restricting it to the
+  images having this label
+* `image-size`: if present, images are resized to this size
+* `image-colors`: can be 1 or 3 for B/W or color images
+* `batch-size`: how many images to consider in each minibatch
+* `loader-workers`: how many workers to use to load data in background
 
 ### Generator
 
