@@ -192,7 +192,38 @@ The module `discriminator` exports the following options:
 
 ### Statistics
 
+This module defines classes that handle logging stastistics such as
+time spent during training and the various losses. At this moment, logging
+can happen either on the console or via TensorBoard.
+
+The module `statistics` defines the following classes:
+
+* `NoStatistics`: a class that just drops the logging information
+* `ConsoleStatistics`: a class that displays logging information on the console
+* `TensorBoardStatistics`: a class that logs information via TensorBoard
+
+The module `statistics` defines the following options:
+
+* `log`: either `none`, `console` or `tensorboard`
+
 ### Snapshot
+
+This module define classes that periodically take example snapshot images and
+save them.
+
+The module `snapshot` defines the following classes:
+
+* `FolderSnaphot`: a class that saves images on disk in a predefined folder
+* `TensorBoardSnaphot`: yet to come
+
+The module `snapshot` defines the following options:
+
+* `save-images-as`: either `folder` or `tensorboard`
+* `output-dir`: directory where to store the generated images
+* `snapshot-size`: how many images to generate for each sample (must be <= batch-size)
+* `sample-every`: how often to sample images (in epochs)
+* `sample-from-fixed-noise`: if this flag is on, always use the same input noise
+  when sampling, otherwise generate new random images each time
 
 ### Evaluation
 
@@ -209,7 +240,8 @@ you need to follow four steps:
   loss function...). You will need to make sure that it can be initialized
   via an `option` object and that it exposes the same public methods
   as the other classes (for instance, a loss function exposes two public methods
-  `def for_generator(self, fake_data, labels=None)` and `def for_discriminator(self, real_data, fake_data, labels=None)`)
+  `def for_generator(self, fake_data, labels=None)` and
+  `def for_discriminator(self, real_data, fake_data, labels=None)`)
 * let Ganzo be aware of your component by registering it
 * add an enviroment variable to make Ganzo find your module
 * optionally, add your custom options to the argument parser.
