@@ -13,6 +13,7 @@ from noise import Noise
 from statistics import Statistics
 from snapshot import Snapshot
 from game import Game
+from registry import Registry
 
 
 def _name(options):
@@ -37,6 +38,8 @@ class Options:
         Statistics.add_options(self.parser)
         Snapshot.add_options(self.parser)
         Game.add_options(self.parser)
+        for f in Registry.option_functions():
+            f(self.parser)
 
     def from_command_line(self):
         options = self.parser.parse_args()

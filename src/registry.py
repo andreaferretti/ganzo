@@ -9,6 +9,7 @@ class RegistryError(ValueError):
 class Registry:
     _available = defaultdict(dict)
     _defaults = dict()
+    _option_functions = []
 
     @staticmethod
     def add(namespace, name, cls):
@@ -32,6 +33,14 @@ class Registry:
     def default(namespace):
         return Registry._defaults.get(namespace)
 
+    @staticmethod
+    def add_option_function(f):
+        Registry._option_functions.append(f)
+
+    @staticmethod
+    def option_functions():
+        return list(Registry._option_functions)
+
 def register(namespace, name, default=False):
     def inner(cls):
         Registry.add(namespace, name, cls)
@@ -40,6 +49,10 @@ def register(namespace, name, default=False):
         return cls
 
     return inner
+
+def with_option_parser(f):
+    Registry.add_option_function(f)
+
 
 _external_modules_name = os.environ.get('GANZO_LOAD_MODULES')
 if _external_modules_name is not None:
