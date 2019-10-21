@@ -156,7 +156,35 @@ The module `data` exports the following options:
 
 ### Generator
 
+This module defines the various generator architectures.
+
+The module `generator` defines the following classes:
+
+* `FCGenerator` TODO describe it
+* `ConvGenerator` TODO describe it
+
+The module `generator` exports the following options:
+
+* `generator`: the type of generator (`fc` or `conv`)
+* `generator-dropout`: the amount of dropout to use between generator layers -
+  leave unspecified to avoid using dropout
+* `generator-layers`: how many layers to use in the generator
+
 ### Discriminator
+
+This module defines the various generator architectures.
+
+The module `discriminator` defines the following classes:
+
+* `FCDiscriminator` TODO describe it
+* `ConvDiscriminator` TODO describe it
+
+The module `discriminator` exports the following options:
+
+* `discriminator`: the type of discriminator (`fc` or `conv`)
+* `discriminator-dropout`: the amount of dropout to use between discriminator
+  layers - leave unspecified to avoid using dropout
+* `discriminator-layers`: how many layers to use in the discriminator
 
 ### Loss
 
