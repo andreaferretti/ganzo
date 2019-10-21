@@ -234,6 +234,14 @@ class CustomLoss:
 Registry.add('loss', 'custom-loss', CustomLoss)
 ```
 
+You will then be able to select your custom loss function by passing the
+command line argument `--loss custom-loss`. Both `register` and `Registry.add`
+take a flag `default` which means that the registered component will be
+selected as default when the corresponding command line option is missing.
+This can be used only once, though, and it is already taken by the default
+components of Ganzo, so you should **not** pass `default=True` while
+registering your component.
+
 ### Finding your module
 
 Of course, at this point Ganzo is not aware that your module exists, or that
@@ -254,5 +262,23 @@ GANZO_LOAD_MODULES=custom python src/ganzo.py # more options here
 ```
 
 ### Customizing options
+
+Probably, your custom component will need some degrees of freedom that are not
+applicable in general, and this means that you need to be able to extend
+the command line parser. To do this, import the decorator `with_option_parser`
+from the `registry` module and define a function that takes a parser argument
+and extends it.
+
+It is advised to namespace you options into their own argument group, in order
+to make the help message more understandable. An example would be
+
+```python
+from registry import with_option_parser
+
+@with_option_parser
+def add_my_custom_options(parser):
+    group = parser.add_argument_group('custom')
+    group.add_argument('foos', type=int, default=3, help='the number of foos')
+```
 
 ## Using Ganzo as a library
