@@ -14,18 +14,21 @@ class GANLoss:
         self.soft_labels = options.soft_labels
         self.noisy_labels = options.noisy_labels
         self.noisy_labels_frequency = options.noisy_labels_frequency
+        self.device = torch.device(options.device)
 
     def real_labels(self):
         if self.soft_labels:
-            return torch.FloatTensor(self.batch_size, 1).uniform_(0.9, 1)
+            labels = torch.FloatTensor(self.batch_size, 1).uniform_(0.9, 1)
         else:
-            return torch.ones(self.batch_size, 1)
+            labels = torch.ones(self.batch_size, 1)
+        return labels.to(self.device)
 
     def fake_labels(self):
         if self.soft_labels:
-            return torch.FloatTensor(self.batch_size, 1).uniform_(0, 0.1)
+            labels = torch.FloatTensor(self.batch_size, 1).uniform_(0, 0.1)
         else:
-            return torch.ones(self.batch_size, 1)
+            labels = torch.ones(self.batch_size, 1)
+        return labels.to(self.device)
 
     def for_generator(self, fake_data, labels=None):
         real_labels = self.real_labels()
