@@ -1,3 +1,4 @@
+import os
 import importlib
 from timeit import default_timer as timer
 
@@ -35,11 +36,11 @@ if tensorboard_enabled:
     @register('log', 'tensorboard')
     class TensorBoardStatistics:
         def __init__(self, options):
-            self.writer = SummaryWriter(options.experiment)
+            self.writer = SummaryWriter(os.path.join(options.output_dir, options.experiment))
             self.epoch = 1
 
         def log(self, losses):
-            for k, v in losses:
+            for k, v in losses.items():
                 self.writer.add_scalar(k, v, self.epoch)
             self.epoch += 1
 

@@ -1,16 +1,13 @@
 import os
 import math
+import importlib
 
 import torchvision
 
 from registry import Registry, RegistryError, register
 
-
-@register('snapshot', 'folder', default=True)
-class FolderSnapshot:
+class BaseSnapshot:
     def __init__(self, options):
-        self.base_dir = os.path.join(options.output_dir, options.experiment)
-        os.makedirs(self.base_dir, exist_ok=True)
         self.batch_size = options.batch_size
         self.image_size = options.image_size
         self.image_colors = options.image_colors
@@ -21,20 +18,50 @@ class FolderSnapshot:
         self.noise = None
         self.sample_from_fixed_noise = options.sample_from_fixed_noise
 
-    def save(self, dataloder, noiseloader, generator):
+    def _samples(self, noiseloader, generator):
         if self.sample_from_fixed_noise and self.noise is None:
             self.noise = noiseloader.next()[:self.snapshot_size]
 
+        if self.sample_from_fixed_noise:
+            noise = self.noise
+        else:
+            noise = noiseloader.next()[:self.snapshot_size]
+        samples = generator(noise).view(self.snapshot_size, self.image_colors, self.image_size, self.image_size)
+        return samples * 0.5 + 0.5
+
+@register('snapshot', 'folder', default=True)
+class FolderSnapshot(BaseSnapshot):
+    def __init__(self, options):
+        super().__init__(options)
+        self.base_dir = os.path.join(options.output_dir, options.experiment)
+        os.makedirs(self.base_dir, exist_ok=True)
+
+    def save(self, dataloder, noiseloader, generator):
         if self.epoch % self.sample_every == 0:
-            if self.sample_from_fixed_noise:
-                noise = self.noise
-            else:
-                noise = noiseloader.next()[:self.snapshot_size]
-            samples = generator(noise).view(self.snapshot_size, self.image_colors, self.image_size, self.image_size)
-            samples = samples * 0.5 + 0.5
+            samples = self._samples(noiseloader, generator)
 
             torchvision.utils.save_image(samples, os.path.join(self.base_dir, f'epoch_{self.epoch}.png'), nrow=self.nrows, padding=2)
         self.epoch += 1
+
+tensorboard_enabled = importlib.util.find_spec('tensorboardX') is not None
+
+if tensorboard_enabled:
+    from tensorboardX import SummaryWriter
+
+    @register('snapshot', 'tensorboard')
+    class TensorBoardSnapshot(BaseSnapshot):
+        def __init__(self, options):
+            super().__init__(options)
+            self.writer = SummaryWriter(os.path.join(options.output_dir, options.experiment))
+            self.epoch = 1
+
+        def save(self, dataloder, noiseloader, generator):
+            if self.epoch % self.sample_every == 0:
+                samples = self._samples(noiseloader, generator)
+
+                grid = torchvision.utils.make_grid(samples, nrow=self.nrows, padding=2)
+                self.writer.add_image('images', grid, self.epoch)
+            self.epoch += 1
 
 class Snapshot:
     @staticmethod
