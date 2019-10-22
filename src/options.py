@@ -23,6 +23,7 @@ def _name(options):
 class Options:
     def __init__(self):
         self.parser = argparse.ArgumentParser(description='GANzo')
+        self.parser.add_argument('--from-json', help='load configuration from this JSON file')
         self.parser.add_argument('--experiment', help='experiment name, leave blank to autogenerate')
         self.parser.add_argument('--device', help='device name, leave blank to autodetect')
         self.parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
@@ -55,10 +56,13 @@ class Options:
 
         return options
 
-    def from_json(self, path):
+    def from_json(self, path, parent=None):
         n = argparse.Namespace()
         with open(path, 'r') as f:
-            n.__dict__ = json.load(f)
+            dictionary = json.load(f)
+            if parent is not None:
+                dictionary = {**vars(parent), **dictionary}
+            n.__dict__ = dictionary
         return n
 
     def save_as_json(self, options):

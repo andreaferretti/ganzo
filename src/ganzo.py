@@ -18,6 +18,8 @@ from options import Options
 if __name__ == '__main__':
     option_loader = Options()
     options = option_loader.from_command_line()
+    if options.from_json is not None:
+        options = option_loader.from_json(options.from_json, parent=options)
     print(options)
 
     model_dir = os.path.join(options.model_dir, options.experiment)

@@ -55,7 +55,7 @@ class Data:
     def add_options(parser):
         group = parser.add_argument_group('data loading')
         group.add_argument('--data-format', choices=Registry.keys('data'), default=Registry.default('data'), help='type of dataset')
-        group.add_argument('--data-dir', required=True, help='directory with the images')
+        group.add_argument('--data-dir', default='data', help='directory with the images')
         group.add_argument('--dataset', choices=['folder', 'mnist', 'lsun'], default='folder', help='source of the dataset')
         group.add_argument('--image-class', default='bedroom', help='class to train on, only for LSUN')
         group.add_argument('--image-size', type=int, default=64, help='image dimension')

@@ -27,7 +27,7 @@ conda create -n ganzo python=3.7 pytorch torchvision -c pytorch
 If available, Ganzo supports [TensorBoardX](https://github.com/lanpa/tensorboardX).
 This is detected at runtime, so Ganzo can run with or without it.
 
-If you want to use [LMDB]https://lmdb.readthedocs.io/) datasets such as
+If you want to use [LMDB](https://lmdb.readthedocs.io/) datasets such as
 [LSUN](https://github.com/fyu/lsun), you will also need that dependency:
 
 ```
@@ -65,9 +65,34 @@ Some options are global in nature:
 * `delete` if this flag is set, and an experiment with this name has already
   been run, Ganzo will delete everything there and start from scratch. Note that
   by default Ganzo will ask on the command line what to do, unless at least one
-  flag among `delete` and `restore` is active.
+  flag among `delete` and `restore` is active (`delete` takes precedence over
+  `restore`).
 * `seed` this is the seed for PyTorch random number generator. This is used
   in order to reproduce results.
+* `from-json`: load configuration from this JSON file (see below)
+
+### Running from a JSON configuration file
+
+If options become too many to handle comfortably, you can run Ganzo with a
+JSON configuration file. There are two way to do this.
+
+If you have already run an experiment, and you try to run it again, Ganzo
+suggests you to keep going from where it was left (this can even be forced
+by using the `--restore` flag).
+
+Otherwise, if it is the first time that you run an experiment, you can create
+a JSON file containing some of the command line options, and ask Ganzo to load
+the configuration from this file using the `--from-json` flag. Command line
+and JSON options can also be mixed freely, with JSON options taking precedence.
+
+Assuming you have an option file called `options.json`, you can load it with
+
+```
+python src/ganzo.py --from-json options.json
+```
+
+If you need a reference file, you can run any experiment, look at the generated
+options file, and tweak that.
 
 ## Architecture
 
