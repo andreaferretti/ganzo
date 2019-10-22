@@ -25,7 +25,12 @@ conda create -n ganzo python=3.7 pytorch torchvision -c pytorch
 ```
 
 If available, Ganzo supports [TensorBoardX](https://github.com/lanpa/tensorboardX).
-This is detected at runtime, so Ganzo can run with or without it.
+This is detected at runtime, so Ganzo can run with or without it. TensorBoardX
+can be installed with Pip:
+
+```
+pip install tensorboardX
+```
 
 If you want to use [LMDB](https://lmdb.readthedocs.io/) datasets such as
 [LSUN](https://github.com/fyu/lsun), you will also need that dependency:
@@ -187,6 +192,7 @@ The module `generator` defines the following classes:
 
 * `FCGenerator` TODO describe it
 * `ConvGenerator` TODO describe it
+* `GoodGenerator` TODO describe it
 
 The module `generator` exports the following options:
 
@@ -203,6 +209,7 @@ The module `discriminator` defines the following classes:
 
 * `FCDiscriminator` TODO describe it
 * `ConvDiscriminator` TODO describe it
+* `GoodDiscriminator` TODO describe it
 
 The module `discriminator` exports the following options:
 
@@ -225,7 +232,8 @@ The module `statistics` defines the following classes:
 
 * `NoStatistics`: a class that just drops the logging information
 * `ConsoleStatistics`: a class that displays logging information on the console
-* `TensorBoardStatistics`: a class that logs information via TensorBoard
+* `TensorBoardStatistics`: a class that logs information via TensorBoard (requires
+  TensorBoardX)
 
 The module `statistics` defines the following options:
 
@@ -239,7 +247,8 @@ save them.
 The module `snapshot` defines the following classes:
 
 * `FolderSnaphot`: a class that saves images on disk in a predefined folder
-* `TensorBoardSnaphot`: yet to come
+* `TensorBoardSnaphot`: a class that saves images via TensorBoard (requires
+  TensorBoardX)
 
 The module `snapshot` defines the following options:
 
@@ -359,7 +368,7 @@ the command line parser. To do this, import the decorator `with_option_parser`
 from the `registry` module and define a function that takes a parser argument
 and extends it.
 
-It is advised to namespace you options into their own argument group, in order
+It is advised to namespace your options into their own argument group, in order
 to make the help message more understandable. An example would be
 
 ```python
