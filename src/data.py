@@ -40,6 +40,7 @@ class SingleImage:
         return next(self.iterator, None)
 
     def reset(self):
+        del self.iterator
         self.iterator = iter(self.dataloader)
 
 class Data:

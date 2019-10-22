@@ -63,6 +63,137 @@ class ConvGenerator(nn.Module):
         x = self.conv[-1](x)
         return torch.tanh(x)
 
+def _init_kaiming(m):
+    if m.weight is not None:
+        nn.init.kaiming_uniform_(m.weight)
+    if m.bias is not None:
+        nn.init.constant_(m.bias, 0.0)
+
+def _init_xavier(m):
+    if m.weight is not None:
+        nn.init.xavier_uniform_(m.weight)
+    if m.bias is not None:
+        nn.init.constant_(m.bias, 0.0)
+
+class DepthToSpace(nn.Module):
+    def __init__(self, block_size):
+        super(DepthToSpace, self).__init__()
+        self.block_size = block_size
+        self.block_size_sq = block_size * block_size
+
+    def forward(self, input):
+        output = input.permute(0, 2, 3, 1)
+        (batch_size, input_height, input_width, input_depth) = output.size()
+        output_depth = int(input_depth / self.block_size_sq)
+        output_width = int(input_width * self.block_size)
+        output_height = int(input_height * self.block_size)
+        t_1 = output.reshape(batch_size, input_height, input_width, self.block_size_sq, output_depth)
+        spl = t_1.split(self.block_size, 3)
+        stacks = [t_t.reshape(batch_size, input_height, output_width, output_depth) for t_t in spl]
+        output = torch.stack(stacks, 0).transpose(0, 1).permute(0, 2, 1, 3, 4).reshape(batch_size, output_height, output_width, output_depth)
+        output = output.permute(0, 3, 1, 2)
+        return output
+
+class UpSampleConv(nn.Module):
+    def __init__(self, input_dim, output_dim, kernel_size, bias=True):
+        super(UpSampleConv, self).__init__()
+        self.conv = nn.Conv2d(
+            input_dim,
+            output_dim,
+            kernel_size=kernel_size,
+            stride=1,
+            padding=int((kernel_size - 1) / 2),
+            bias=bias
+        )
+        self.depth_to_space = DepthToSpace(2)
+
+    def forward(self, x):
+        x = self.depth_to_space(torch.cat((x, x, x, x), 1))
+        return self.conv(x)
+
+class ResidualBlock(nn.Module):
+    def __init__(self, input_dim, output_dim, kernel_size, hw=64):
+        super(ResidualBlock, self).__init__()
+
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.batch_norm1 = nn.BatchNorm2d(input_dim)
+        self.batch_norm2 = nn.BatchNorm2d(output_dim)
+        self.shortcut = UpSampleConv(input_dim, output_dim, 1)
+        self.upsample_conv = UpSampleConv(input_dim, output_dim, kernel_size, bias=False)
+        self.conv = nn.Conv2d(
+            output_dim,
+            output_dim,
+            kernel_size=kernel_size,
+            stride=1,
+            padding=int((kernel_size - 1)/2),
+            bias=True
+        )
+
+        _init_xavier(self.shortcut.conv)
+        _init_kaiming(self.upsample_conv.conv)
+        _init_kaiming(self.conv)
+
+    def forward(self, x):
+        shortcut = self.shortcut(x)
+        x = self.batch_norm1(x)
+        x = self.relu1(x)
+        x = self.upsample_conv(x)
+        x = self.batch_norm2(x)
+        x = self.relu2(x)
+        x = self.conv(x)
+
+        return shortcut + x
+
+@register('generator', 'good')
+class GoodGenerator(nn.Module):
+    '''
+    GoodGenerator, using the 64x64 architecture described in
+        Ishaan Gulrajani, Faruk Ahmed, Martin Arjovsky, Vincent Dumoulin, Aaron Courville
+        Improved Training of Wasserstein GANs
+        https://arxiv.org/abs/1704.00028
+
+    Dropout is not used and the number of layers is fixed.
+    Image size must be a multiple of 16.
+    '''
+    def __init__(self, options):
+        super(GoodGenerator, self).__init__()
+
+        if options.image_size % 16 != 0:
+            raise ValueError('Image size must be multiple of 16')
+        start = options.image_size // 16
+        side = options.image_size
+
+        self.image_size = options.image_size
+        self.start = start
+
+        self.fc = nn.Linear(options.state_size, start * start * 8 * side)
+        self.rb1 = ResidualBlock(8 * side, 8 * side, 3)
+        self.rb2 = ResidualBlock(8 * side, 4 * side, 3)
+        self.rb3 = ResidualBlock(4 * side, 2 * side, 3)
+        self.rb4 = ResidualBlock(2 * side, 1 * side, 3)
+        self.batch_norm = nn.BatchNorm2d(side)
+        self.conv = nn.Conv2d(side, 3, kernel_size=3, stride=1, padding=1, bias=True)
+        self.relu = nn.ReLU()
+        self.tanh = nn.Tanh()
+
+        _init_xavier(self.fc)
+        _init_kaiming(self.conv)
+
+    def forward(self, x):
+        batch_size = x.size()[0]
+        x = self.fc(x.contiguous()).view(-1, 8 * self.image_size, self.start, self.start)
+        x = self.rb1(x)
+        x = self.rb2(x)
+        x = self.rb3(x)
+        x = self.rb4(x)
+
+        x = self.batch_norm(x)
+        x = self.relu(x)
+        x = self.conv(x)
+        x = self.tanh(x)
+        return x.view(batch_size, 3, self.image_size, self.image_size)
+
 class Generator:
     @staticmethod
     def from_options(options):

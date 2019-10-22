@@ -77,7 +77,7 @@ class Game:
     def add_options(parser):
         group = parser.add_argument_group('training options')
         group.add_argument('--generator-iterations', type=int, default=1, help='number of iterations for the generator')
-        group.add_argument('--discriminator-iterations', type=int, default=5, help='number of iterations for the discriminator')
+        group.add_argument('--discriminator-iterations', type=int, default=1, help='number of iterations for the discriminator')
         group.add_argument('--generator-lr', type=float, default=1e-4, help='learning rate for the generator')
         group.add_argument('--discriminator-lr', type=float, default=1e-4, help='learning rate for the discriminator')
         group.add_argument('--beta1', type=float, default=0, help='first beta')

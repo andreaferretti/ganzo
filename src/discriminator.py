@@ -67,6 +67,129 @@ class ConvDiscriminator(nn.Module):
         x = self.conv[-1](x)
         return torch.sigmoid(x).view(batch_size, -1)
 
+def _init_kaiming(m):
+    if m.weight is not None:
+        nn.init.kaiming_uniform_(m.weight)
+    if m.bias is not None:
+        nn.init.constant_(m.bias, 0.0)
+
+def _init_xavier(m):
+    if m.weight is not None:
+        nn.init.xavier_uniform_(m.weight)
+    if m.bias is not None:
+        nn.init.constant_(m.bias, 0.0)
+
+def _mean_pool(x):
+    return (x[:, :, ::2, ::2] + x[:, :, 1::2, ::2] + x[:, :, ::2, 1::2] + x[:, :, 1::2, 1::2]) / 4
+
+class ConvMeanPool(nn.Module):
+    def __init__(self, input_dim, output_dim, kernel_size):
+        super(ConvMeanPool, self).__init__()
+        self.conv = nn.Conv2d(
+            input_dim,
+            output_dim,
+            kernel_size,
+            stride=1,
+            padding=int((kernel_size - 1) / 2),
+            bias=True
+        )
+
+    def forward(self, x):
+        return _mean_pool(self.conv(x))
+
+class MeanPoolConv(nn.Module):
+    def __init__(self, input_dim, output_dim, kernel_size):
+        super(MeanPoolConv, self).__init__()
+        self.conv = nn.Conv2d(
+            input_dim,
+            output_dim,
+            kernel_size,
+            stride=1,
+            padding=int((kernel_size - 1) / 2),
+            bias=True
+        )
+
+    def forward(self, x):
+        return self.conv(_mean_pool(x))
+
+class ResidualBlock(nn.Module):
+    def __init__(self, input_dim, output_dim, kernel_size, hw):
+        super(ResidualBlock, self).__init__()
+
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.layer_norm1 = nn.LayerNorm([input_dim, hw, hw])
+        self.layer_norm2 = nn.LayerNorm([input_dim, hw, hw])
+        self.shortcut = MeanPoolConv(input_dim, output_dim, 1)
+        self.conv = nn.Conv2d(
+            input_dim,
+            input_dim,
+            kernel_size=kernel_size,
+            stride=1,
+            padding=int((kernel_size - 1) / 2),
+            bias=False
+        )
+        self.conv_mean_pool = ConvMeanPool(input_dim, output_dim, kernel_size)
+
+        _init_xavier(self.shortcut.conv)
+        _init_kaiming(self.conv)
+        _init_kaiming(self.conv_mean_pool.conv)
+
+    def forward(self, x):
+        shortcut = self.shortcut(x)
+        x = self.layer_norm1(x)
+        x = self.relu1(x)
+        x = self.conv(x)
+        x = self.layer_norm2(x)
+        x = self.relu2(x)
+        x = self.conv_mean_pool(x)
+
+        return shortcut + x
+
+@register('discriminator', 'good')
+class GoodDiscriminator(nn.Module):
+    '''
+    GoodDiscriminator, using the 64x64 architecture described in
+        Ishaan Gulrajani, Faruk Ahmed, Martin Arjovsky, Vincent Dumoulin, Aaron Courville
+        Improved Training of Wasserstein GANs
+        https://arxiv.org/abs/1704.00028
+
+    Dropout is not used and the number of layers is fixed.
+    Image size must be a multiple of 16.
+    '''
+    def __init__(self, options):
+        super(GoodDiscriminator, self).__init__()
+
+
+        if options.image_size % 16 != 0:
+            raise ValueError('Image size must be multiple of 16')
+        start = options.image_size // 16
+        side = options.image_size
+
+        self.image_size = options.image_size
+        self.start = start
+
+        self.conv = nn.Conv2d(3, side, kernel_size=3, stride=1, padding=1, bias=True)
+        self.rb1 = ResidualBlock(1 * side, 2 * side, 3, hw=side) # <--- check whether to use `side` or `64`
+        self.rb2 = ResidualBlock(2 * side, 4 * side, 3, hw=int(side / 2))
+        self.rb3 = ResidualBlock(4 * side, 8 * side, 3, hw=int(side / 4))
+        self.rb4 = ResidualBlock(8 * side, 8 * side, 3, hw=int(side / 8))
+        self.fc = nn.Linear(start * start * 8 * side, 1)
+
+        _init_xavier(self.fc)
+        _init_xavier(self.conv)
+
+    def forward(self, x):
+        batch_size = x.size()[0]
+        x = x.contiguous().view(batch_size, 3, self.image_size, self.image_size)
+        x = self.conv(x)
+        x = self.rb1(x)
+        x = self.rb2(x)
+        x = self.rb3(x)
+        x = self.rb4(x)
+        x = x.view(batch_size, self.start * self.start * 8 * self.image_size)
+        return self.fc(x).view(-1)
+
 class Discriminator:
     @staticmethod
     def from_options(options):

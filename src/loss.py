@@ -61,7 +61,7 @@ class WGANGPLoss:
         alpha = torch.rand(batch_size, 1).expand(batch_size, int(n_elements / batch_size)).contiguous()
         alpha = alpha.view(batch_size, colors, width, height).to(self.device)
 
-        fake_data = fake_data.view(batch_size, colors, image_width, image_height)
+        fake_data = fake_data.view(batch_size, colors, width, height)
         interpolates = alpha * real_data.detach() + ((1 - alpha) * fake_data.detach())
 
         interpolates = interpolates.to(self.device)
@@ -82,12 +82,12 @@ class WGANGPLoss:
         return gradient_penalty
 
     def for_generator(self, fake_data, labels=None):
-        return self.discriminator(fake_data).mean()
+        return -self.discriminator(fake_data).mean()
 
     def for_discriminator(self, real_data, fake_data, labels=None):
         real = self.discriminator(real_data).mean()
         fake = self.discriminator(fake_data).mean()
-        penalty = self.gradient_penalty(critic, real_data, fake_data)
+        penalty = self.gradient_penalty(real_data, fake_data)
         return fake - real + penalty
 
 class Loss:
