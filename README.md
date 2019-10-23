@@ -170,7 +170,19 @@ some datasets are stored in a custom way - for instance MNIST or LSUN.
 
 The module `data` defines the following classes:
 
-* `SingleImageData` TODO describe it
+* `SingleImageData`: Loads datasets of single images, possibly matched with a
+  corresponding label.
+
+  Takes care of resizing/cropping images, batching, shuffling and distributing
+  the work of data loading across a number of workers. Each batch has shape
+
+    B x C x W x H
+
+    where
+    - B is the batch size
+    - C is the number of channels (1 for B/W images, 3 for colors)
+    - W is the image width
+    - H is the image height
 
 The module `data` exports the following options:
 
