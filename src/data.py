@@ -91,9 +91,20 @@ class SingleImage:
         self.iterator = iter(self.dataloader)
 
     def next(self):
+        '''
+        Yields the next batch of data and labels. Returns a pair
+        (images, labels), where
+
+            * images has shape B x C x W x H
+            * labels has shape B x 1
+        '''
         return next(self.iterator, None)
 
+
     def reset(self):
+        '''
+        Resets the state of the dataset, call this between epochs.
+        '''
         del self.iterator
         self.iterator = iter(self.dataloader)
 
