@@ -6,6 +6,60 @@ from registry import Registry, RegistryError, register
 
 @register('data', 'single-image', default=True)
 class SingleImage:
+    '''
+    Loads datasets of single images, possibly matched with a corresponding label.
+
+    Takes care of resizing/cropping images, batching, shuffling and distributing
+    the work of data loading across a number of workers. Each batch has shape
+
+        B x C x W x H
+
+    where
+    * B is the batch size
+    * C is the number of channels (1 for B/W images, 3 for colors)
+    * W is the image width
+    * H is the image height
+
+    The following options can be used to configure it:
+
+    --data-dir: directory storing the dataset
+    --dataset: how the underlying dataset is stored
+        * `mnist` expects images in the standard MNIST format (idx-ubyte). This
+            dataset is introduced in
+
+            Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner
+            Gradient-based learning applied to document recognition
+            Proceedings of the IEEE, 86(11):2278-2324, November 1998
+            http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf
+
+            and available on http://yann.lecun.com/exdb/mnist/
+        * `lsun` expects the LSUN database. This dataset is introduced in
+
+            Fisher Yu, Ari Seff, Yinda Zhang, Shuran Song, Thomas Funkhouser, Jianxiong Xiao
+            LSUN: Construction of a Large-scale Image Dataset using Deep Learning with Humans in the Loop
+            https://arxiv.org/abs/1506.03365
+
+            and available on https://www.yf.io/p/lsun
+        * `folder` expects a folder of images structured as follows
+
+            base-folder
+            ├── class1
+            │   ├── image1.jpg
+            │   ├── image2.png
+            │   ├── image3.jpg
+            │   └── ...
+            ├── class2
+            │   └── ...
+            └── ...
+
+    --image-size SIZE: crop or resize images to SIZE
+    --image-colors: 1 for B/W images, 3 for colors
+    --loader-workers: number of threads loading data
+    --batch-size: number of images inside each batch (the last batch is
+        discarded if the dataset size is not divisible evenly by batch_size)
+    --image-class: if present, filter the dataset to keep only images with this
+        label
+    '''
     def __init__(self, options):
         transform_list = []
         if options.image_size is not None:

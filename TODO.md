@@ -48,3 +48,4 @@ For all existing experiments:
 * Add documentation comments to all classes/methods
 * Describe models
 * Finish README with list of components
+* Document the public API used for each type of component
