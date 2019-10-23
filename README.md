@@ -222,6 +222,20 @@ The module `discriminator` exports the following options:
 
 ### Noise
 
+This modules defines classese that generate random noise. Most GAN generators
+can be seen as implementing a map {latent space} -> {images}, where the
+latent space is some fixed Euclidean space. The noise generators implement
+sampling in latent space, so generating an image consists of sampling a random
+noise and applying the generator.
+
+The module `noise` defines the following classes:
+
+* `GaussianNoise`: A generator of Gaussian noise
+
+The module `noise` exports the following options:
+
+* `state-size`: the dimension of the latent space
+
 ### Statistics
 
 This module defines classes that handle logging stastistics such as
