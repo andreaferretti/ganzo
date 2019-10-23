@@ -34,6 +34,8 @@ For all existing experiments:
 * Conditioned GAN
 * New script to generate images from trained models
 * Make it run under Pipenv
+* Store the current epoch somewhere, so that if we restore an experiment, the
+  generated images do not overlap
 
 # Optimization
 
