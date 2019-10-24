@@ -20,9 +20,8 @@ For all existing experiments:
 * New component type: Alternator - to decide when to switch between G and D
 * Logging to file
 * Make FC and Conv Gnerator and Discriminator more flexible
-* WGAN loss (no gradient penalty)
 * Energy based losses
-* Add FaceMNIST to data loading
+* Add FashionMNIST to data loading
 * Add a new component type to decide how to initialize layers?
 
 # Features
