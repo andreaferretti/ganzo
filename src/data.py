@@ -55,6 +55,7 @@ class SingleImage:
     --image-size SIZE: crop or resize images to SIZE
     --image-colors: 1 for B/W images, 3 for colors
     --loader-workers: number of threads loading data
+    --pin-memory: whether to pin memory to CPU cores for loading data
     --batch-size: number of images inside each batch (the last batch is
         discarded if the dataset size is not divisible evenly by batch_size)
     --image-class: if present, filter the dataset to keep only images with this
@@ -86,7 +87,7 @@ class SingleImage:
             num_workers=options.loader_workers,
             shuffle=True,
             drop_last=True,
-            pin_memory=True
+            pin_memory=options.pin_memory
         )
         self.iterator = iter(self.dataloader)
 
@@ -128,3 +129,4 @@ class Data:
         group.add_argument('--image-colors', type=int, default=3, help='image colors')
         group.add_argument('--batch-size', type=int, default=64, help='batch size')
         group.add_argument('--loader-workers', type=int, default=4, help='number of threads loading data')
+        group.add_argument('--pin-memory', action='store_true', help='pin memory to CPU cores for loading data')

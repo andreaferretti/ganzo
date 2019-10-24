@@ -47,6 +47,20 @@ class GANLoss:
         fake = self.criterion(self.discriminator(fake_data), fake_labels)
         return real + fake
 
+@register('loss', 'wgan')
+class WGANLoss:
+    def __init__(self, options, discriminator):
+        self.device = torch.device(options.device)
+        self.discriminator = discriminator
+
+    def for_generator(self, fake_data, labels=None):
+        return -self.discriminator(fake_data).mean()
+
+    def for_discriminator(self, real_data, fake_data, labels=None):
+        real = self.discriminator(real_data).mean()
+        fake = self.discriminator(fake_data).mean()
+        return fake - real
+
 @register('loss', 'wgan-gp')
 class WGANGPLoss:
     def __init__(self, options, discriminator):

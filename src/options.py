@@ -10,6 +10,7 @@ from generator import Generator
 from discriminator import Discriminator
 from loss import Loss
 from noise import Noise
+from hook import Hook
 from statistics import Statistics
 from snapshot import Snapshot
 from evaluation import Evaluation
@@ -37,6 +38,7 @@ class Options:
         Discriminator.add_options(self.parser)
         Loss.add_options(self.parser)
         Noise.add_options(self.parser)
+        Hook.add_options(self.parser)
         Statistics.add_options(self.parser)
         Snapshot.add_options(self.parser)
         Evaluation.add_options(self.parser)

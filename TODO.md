@@ -40,7 +40,7 @@ For all existing experiments:
 # Optimization
 
 * Make use of multiple GPUs
-* Understand why we take so many CPUs
+* Understand why we take so many CPUs (relevant: https://github.com/pytorch/pytorch/issues/22866)
 * Saturate GPUs
 
 # Documentation

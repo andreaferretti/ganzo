@@ -8,6 +8,7 @@ from generator import Generator
 from discriminator import Discriminator
 from loss import Loss
 from noise import Noise
+from hook import Hook
 from statistics import Statistics
 from snapshot import Snapshot
 from evaluation import Evaluation
@@ -60,10 +61,11 @@ if __name__ == '__main__':
     discriminator = Discriminator.from_options(options)
     loss = Loss.from_options(options, discriminator)
     noise = Noise.from_options(options)
+    hooks = Hook.from_options(options)
     statistics = Statistics.from_options(options)
     snapshot = Snapshot.from_options(options)
     evaluation = Evaluation.from_options(options)
-    game = Game.from_options(options, generator, discriminator, loss)
+    game = Game.from_options(options, generator, discriminator, loss, hooks)
 
     for _ in range(options.epochs):
         losses = game.run_epoch(data, noise)

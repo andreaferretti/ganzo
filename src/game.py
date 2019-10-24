@@ -2,11 +2,12 @@ import torch
 
 
 class StandardGame:
-    def __init__(self, options, generator, discriminator, loss):
+    def __init__(self, options, generator, discriminator, loss, hooks):
         self.device = torch.device(options.device)
         self.generator = generator
         self.discriminator = discriminator
         self.loss = loss
+        self.hooks = hooks
         self.generator_iterations = options.generator_iterations
         self.discriminator_iterations = options.discriminator_iterations
         self.max_batches_per_epoch = options.max_batches_per_epoch
@@ -23,6 +24,8 @@ class StandardGame:
 
     def run_epoch(self, dataloader, noiseloader):
         dataloader.reset()
+        generator_hook = self.hooks['generator']
+        discriminator_hook = self.hooks['discriminator']
 
         count = 0
         keep_going = True
@@ -39,6 +42,9 @@ class StandardGame:
                 generator_loss.backward()
 
                 self.generator_optimizer.step()
+
+            if generator_hook is not None:
+                generator_hook.apply(self.generator)
 
             for p in self.discriminator.parameters():
                 p.requires_grad_(True)
@@ -59,6 +65,9 @@ class StandardGame:
 
                 self.discriminator_optimizer.step()
 
+            if discriminator_hook is not None:
+                discriminator_hook.apply(self.discriminator)
+
             count += 1
             if self.max_batches_per_epoch is not None and count >= self.max_batches_per_epoch:
                 keep_going = False
@@ -70,8 +79,8 @@ class StandardGame:
 
 class Game:
     @staticmethod
-    def from_options(options, generator, discriminator, loss):
-        return StandardGame(options, generator, discriminator, loss)
+    def from_options(options, generator, discriminator, loss, hooks):
+        return StandardGame(options, generator, discriminator, loss, hooks)
 
     @staticmethod
     def add_options(parser):
