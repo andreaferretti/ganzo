@@ -1,4 +1,6 @@
-from torch.utils.data import DataLoader
+import os
+
+from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
 
 from registry import Registry, RegistryError, register
@@ -109,6 +111,103 @@ class SingleImage:
         del self.iterator
         self.iterator = iter(self.dataloader)
 
+class ImagePairs(Dataset):
+    def __init__(self, basedir, split, transform):
+        allowed_extensions = ['.jpg', '.jpeg', '.png']
+        self.basedir = basedir
+        files = os.listdir(basedir)
+        files = [f for f in files if os.path.splitext(f)[1].lower() in datasets.folder.IMG_EXTENSIONS]
+        self.files = [os.path.join(basedir, f) for f in files]
+        self.transform = transform
+        self.split = split
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, index):
+        image = datasets.folder.default_loader(self.files[index])
+        w, h = image.size
+        if self.split == 'horizontal':
+            image1 = image.crop((0, 0, w // 2, h))
+            image2 = image.crop((w // 2, 0, w, h))
+            return self.transform(image1), self.transform(image2)
+        elif self.split == 'vertical':
+            image1 = image.crop((0, 0, w, h // 2))
+            image2 = image.crop((0, h // 2, w, h))
+            return self.transform(image1), self.transform(image2)
+
+@register('data', 'pair-of-images')
+class PairOfImages:
+    '''
+    Loads datasets of pairs of images.
+
+    Takes care of resizing/cropping images, batching, shuffling and distributing
+    the work of data loading across a number of workers. Each batch is made of two
+    copies, each having shape
+
+        B x C x W x H
+
+    where
+    * B is the batch size
+    * C is the number of channels (1 for B/W images, 3 for colors)
+    * W is the image width
+    * H is the image height
+
+    The following options can be used to configure it:
+
+    --data-dir: directory storing the dataset
+    --image-size SIZE: crop or resize images to SIZE
+    --image-colors: 1 for B/W images, 3 for colors
+    --split: how to split images into pairs
+        * `horizontal` expects a folder of images side by side
+        * `vertical` expects a folder of images one over the other
+    --loader-workers: number of threads loading data
+    --pin-memory: whether to pin memory to CPU cores for loading data
+    --batch-size: number of images inside each batch (the last batch is
+        discarded if the dataset size is not divisible evenly by batch_size)
+    '''
+    def __init__(self, options):
+        transform_list = []
+        if options.image_size is not None:
+            transform_list.append(transforms.Resize((options.image_size, options.image_size)))
+            # transform_list.append(transforms.CenterCrop(options.image_size))
+        transform_list.append(transforms.ToTensor())
+        if options.image_colors == 1:
+            transform_list.append(transforms.Normalize(mean=[0.5], std=[0.5]))
+        elif options.image_colors == 3:
+            transform_list.append(transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]))
+        transform = transforms.Compose(transform_list)
+
+        dataset = ImagePairs(options.data_dir, split=options.split, transform=transform)
+
+        self.dataloader = DataLoader(
+            dataset,
+            batch_size=options.batch_size,
+            num_workers=options.loader_workers,
+            shuffle=True,
+            drop_last=True,
+            pin_memory=options.pin_memory
+        )
+        self.iterator = iter(self.dataloader)
+
+    def next(self):
+        '''
+        Yields the next batch of data and labels. Returns a pair
+        (images, labels), where
+
+            * images has shape B x C x W x H
+            * labels has shape B x 1
+        '''
+        batch = next(self.iterator, None)
+        return batch
+
+    def reset(self):
+        '''
+        Resets the state of the dataset, call this between epochs.
+        '''
+        del self.iterator
+        self.iterator = iter(self.dataloader)
+
 class Data:
     @staticmethod
     def from_options(options):
@@ -127,6 +226,7 @@ class Data:
         group.add_argument('--image-class', default='bedroom', help='class to train on, only for LSUN')
         group.add_argument('--image-size', type=int, default=64, help='image dimension')
         group.add_argument('--image-colors', type=int, default=3, help='image colors')
+        group.add_argument('--split', choices=['horizontal', 'vertical'], help='how to split an image pair')
         group.add_argument('--batch-size', type=int, default=64, help='batch size')
         group.add_argument('--loader-workers', type=int, default=4, help='number of threads loading data')
         group.add_argument('--pin-memory', action='store_true', help='pin memory to CPU cores for loading data')
