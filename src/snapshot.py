@@ -9,6 +9,7 @@ from registry import Registry, RegistryError, register
 
 class BaseSnapshot:
     def __init__(self, options):
+        self.device = torch.device(options.device)
         self.batch_size = options.batch_size
         self.image_size = options.image_size
         self.image_colors = options.image_colors
@@ -37,8 +38,8 @@ class BaseSnapshot:
             dataloder.reset()
             minibatch = dataloader.next()
         inputs, outputs = minibatch
-        inputs = inputs[:self.snapshot_size]
-        outputs = outputs[:self.snapshot_size]
+        inputs = inputs[:self.snapshot_size].to(self.device)
+        outputs = outputs[:self.snapshot_size].to(self.device)
         generated = generator(inputs)
         samples = torch.cat((generated, inputs, outputs), dim=3)
         return samples * 0.5 + 0.5
