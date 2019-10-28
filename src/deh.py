@@ -24,7 +24,7 @@ if __name__ == '__main__':
     model_dir = os.path.join(options.model_dir, options.experiment)
     json_path = os.path.join(model_dir, 'options.json')
     if os.path.exists(model_dir):
-        options = option_loader.from_json(json_path, parent=options)
+        options = option_loader.from_json_and_command_line(json_path)
     else:
         print('Missing model directory: {model_dir}')
         sys.exit(1)

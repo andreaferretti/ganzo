@@ -67,6 +67,13 @@ class Options:
             n.__dict__ = dictionary
         return n
 
+    def from_json_and_command_line(self, path):
+        n = argparse.Namespace()
+        with open(path, 'r') as f:
+            dictionary = json.load(f)
+            n.__dict__ = dictionary
+        return self.parser.parse_args(namespace=n)
+
     def save_as_json(self, options):
         experiment_dir = os.path.join(options.model_dir, options.experiment)
         os.makedirs(experiment_dir, exist_ok=True)
