@@ -1,6 +1,5 @@
 # Models
 
-* Pix2pix
 * CycleGAN
 * StyleGAN
 * StackGAN
@@ -15,7 +14,6 @@ For all existing experiments:
 
 # Components
 
-* PairOfImages data loader
 * Colorization data loader (transform to luminance space etc)
 * New component type: Alternator - to decide when to switch between G and D
 * Logging to file
