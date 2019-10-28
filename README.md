@@ -99,6 +99,23 @@ python src/ganzo.py --from-json options.json
 If you need a reference file, you can run any experiment, look at the generated
 options file, and tweak that.
 
+### Inference
+
+If you already have a trained model, you can use Ganzo to perform inference.
+For this, you just need to pass a minimal set of arguments to Ganzo, namely
+`--model-dir` and `--experiment`. You can optionally specify the number of
+samples to generate with the option `--num-samples`. The script to perform
+inference is called `deh.py`, so you can invoke it like this:
+
+```
+python src/deh.py --model-dir $MODELS --experiment $EXPERIMENT --num-samples 10
+```
+
+The other options will be read from the file `options.json` that is saved next
+to the models, although you can override specific options on the command line.
+Not all training options make sense at inference time, those that are not
+relevant are just ignored.
+
 ## Architecture
 
 Ganzo is structured into modules that handles different concerns: data loading,
