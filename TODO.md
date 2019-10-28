@@ -29,7 +29,6 @@ For all existing experiments:
   complex or specific Evaluation classes (e.g. monitor the W1 distance)
 * Make sure that Tensorboard logs and snapshots can be used simultaneously
 * Conditioned GAN
-* New script to generate images from trained models
 * Make it run under Pipenv
 * Store the current epoch somewhere, so that if we restore an experiment, the
   generated images do not overlap
