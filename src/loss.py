@@ -5,44 +5,54 @@ from torch import autograd
 from registry import Registry, RegistryError, register
 
 
-@register('loss', 'gan', default=True)
-class GANLoss:
-    def __init__(self, options, discriminator):
-        self.criterion = nn.BCELoss()
-        self.discriminator = discriminator
+class LossWithLabels:
+    def __init__(self, options):
         self.batch_size = options.batch_size
         self.soft_labels = options.soft_labels
         self.noisy_labels = options.noisy_labels
         self.noisy_labels_frequency = options.noisy_labels_frequency
         self.device = torch.device(options.device)
 
-    def real_labels(self):
+    def _real_labels(self):
         if self.soft_labels:
             labels = torch.FloatTensor(self.batch_size, 1).uniform_(0.9, 1)
         else:
             labels = torch.ones(self.batch_size, 1)
         return labels.to(self.device)
 
-    def fake_labels(self):
+    def _fake_labels(self):
         if self.soft_labels:
             labels = torch.FloatTensor(self.batch_size, 1).uniform_(0, 0.1)
         else:
             labels = torch.ones(self.batch_size, 1)
         return labels.to(self.device)
 
-    def for_generator(self, fake_data, labels=None):
-        real_labels = self.real_labels()
+    def real_labels(self):
+        if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
+            return self._fake_labels()
+        else:
+            return self._real_labels()
+
+    def fake_labels(self):
+        if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
+            return self._real_labels()
+        else:
+            return self._fake_labels()
+
+@register('loss', 'gan', default=True)
+class GANLoss(LossWithLabels):
+    def __init__(self, options, discriminator):
+        super().__init__(options)
+        self.criterion = nn.BCELoss()
+        self.discriminator = discriminator
+
+    def for_generator(self, fake_data, target=None):
+        real_labels = self._real_labels()
         return self.criterion(self.discriminator(fake_data), real_labels)
 
-    def for_discriminator(self, real_data, fake_data, labels=None):
-        if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
-            real_labels = self.fake_labels()
-        else:
-            real_labels = self.real_labels()
-        if self.noisy_labels and self.noisy_labels_frequency > torch.rand(1).item():
-            fake_labels = self.real_labels()
-        else:
-            fake_labels = self.fake_labels()
+    def for_discriminator(self, real_data, fake_data, target=None):
+        real_labels = self.real_labels()
+        fake_labels = self.fake_labels()
         real = self.criterion(self.discriminator(real_data), real_labels)
         fake = self.criterion(self.discriminator(fake_data), fake_labels)
         return real + fake
@@ -53,10 +63,10 @@ class WGANLoss:
         self.device = torch.device(options.device)
         self.discriminator = discriminator
 
-    def for_generator(self, fake_data, labels=None):
+    def for_generator(self, fake_data, target=None):
         return -self.discriminator(fake_data).mean()
 
-    def for_discriminator(self, real_data, fake_data, labels=None):
+    def for_discriminator(self, real_data, fake_data, target=None):
         real = self.discriminator(real_data).mean()
         fake = self.discriminator(fake_data).mean()
         return fake - real
@@ -95,14 +105,35 @@ class WGANGPLoss:
         gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * self.gradient_penalty_factor
         return gradient_penalty
 
-    def for_generator(self, fake_data, labels=None):
+    def for_generator(self, fake_data, target=None):
         return -self.discriminator(fake_data).mean()
 
-    def for_discriminator(self, real_data, fake_data, labels=None):
+    def for_discriminator(self, real_data, fake_data, target=None):
         real = self.discriminator(real_data).mean()
         fake = self.discriminator(fake_data).mean()
         penalty = self.gradient_penalty(real_data, fake_data)
         return fake - real + penalty
+
+@register('loss', 'pix2pix')
+class Pix2PixLoss(LossWithLabels):
+    def __init__(self, options, discriminator):
+        super().__init__(options)
+        self.discriminator = discriminator
+        self.cross_entropy = nn.BCELoss()
+        self.l1 = nn.L1Loss()
+        self.l1_weight = options.l1_weight
+
+    def for_generator(self, fake_data, target=None):
+        real_labels = self._real_labels()
+        return self.cross_entropy(self.discriminator(fake_data), real_labels) + self.l1_weight * self.l1(fake_data, target)
+
+    def for_discriminator(self, real_data, fake_data, target=None):
+        real_labels = self.real_labels()
+        fake_labels = self.fake_labels()
+        real = self.cross_entropy(self.discriminator(real_data), real_labels)
+        fake = self.cross_entropy(self.discriminator(fake_data), fake_labels)
+        return real + fake
+
 
 class Loss:
     @staticmethod
@@ -121,3 +152,4 @@ class Loss:
         group.add_argument('--soft-labels', action='store_true', help='use soft labels in GAN loss')
         group.add_argument('--noisy-labels', action='store_true', help='use noisy labels in GAN loss')
         group.add_argument('--noisy-labels-frequency', type=float, default=0.1, help='how often to use noisy labels in GAN loss')
+        group.add_argument('--l1-weight', type=float, default=1, help='weight of the L1 distance contribution to the GAN loss')

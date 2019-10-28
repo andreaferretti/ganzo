@@ -193,10 +193,9 @@ class PairOfImages:
     def next(self):
         '''
         Yields the next batch of data and labels. Returns a pair
-        (images, labels), where
+        (imagesA, imagesB), both having shape
 
-            * images has shape B x C x W x H
-            * labels has shape B x 1
+            B x C x W x H
         '''
         batch = next(self.iterator, None)
         return batch

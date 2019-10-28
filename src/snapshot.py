@@ -2,6 +2,7 @@ import os
 import math
 import importlib
 
+import torch
 import torchvision
 
 from registry import Registry, RegistryError, register
@@ -13,12 +14,13 @@ class BaseSnapshot:
         self.image_colors = options.image_colors
         self.sample_every = options.sample_every
         self.snapshot_size = options.snapshot_size
-        self.nrows = int(math.sqrt(self.snapshot_size))
         self.epoch = 1
         self.noise = None
         self.sample_from_fixed_noise = options.sample_from_fixed_noise
+        self.snapshot_translate = options.snapshot_translate
+        self.nrows = int(math.sqrt(self.snapshot_size))
 
-    def _samples(self, noiseloader, generator):
+    def _samples_from_noise(self, noiseloader, generator):
         if self.sample_from_fixed_noise and self.noise is None:
             self.noise = noiseloader.next()[:self.snapshot_size]
 
@@ -29,6 +31,24 @@ class BaseSnapshot:
         samples = generator(noise).view(self.snapshot_size, self.image_colors, self.image_size, self.image_size)
         return samples * 0.5 + 0.5
 
+    def _samples_from_data(self, dataloader, generator):
+        minibatch = dataloader.next()
+        if minibatch is None: # end of batch
+            dataloder.reset()
+            minibatch = dataloader.next()
+        inputs, outputs = minibatch
+        inputs = inputs[:self.snapshot_size]
+        outputs = outputs[:self.snapshot_size]
+        generated = generator(inputs)
+        samples = torch.cat((generated, inputs, outputs), dim=3)
+        return samples * 0.5 + 0.5
+
+    def _samples(self, dataloder, noiseloader, generator):
+        if self.snapshot_translate:
+            return self._samples_from_data(dataloder, generator)
+        else:
+            return self._samples_from_noise(noiseloader, generator)
+
 @register('snapshot', 'folder', default=True)
 class FolderSnapshot(BaseSnapshot):
     def __init__(self, options):
@@ -38,7 +58,7 @@ class FolderSnapshot(BaseSnapshot):
 
     def save(self, dataloder, noiseloader, generator):
         if self.epoch % self.sample_every == 0:
-            samples = self._samples(noiseloader, generator)
+            samples = self._samples(dataloder, noiseloader, generator)
 
             torchvision.utils.save_image(samples, os.path.join(self.base_dir, f'epoch_{self.epoch}.png'), nrow=self.nrows, padding=2)
         self.epoch += 1
@@ -57,7 +77,7 @@ if tensorboard_enabled:
 
         def save(self, dataloder, noiseloader, generator):
             if self.epoch % self.sample_every == 0:
-                samples = self._samples(noiseloader, generator)
+                samples = self._samples(dataloder, noiseloader, generator)
 
                 grid = torchvision.utils.make_grid(samples, nrow=self.nrows, padding=2)
                 self.writer.add_image('images', grid, self.epoch)
@@ -80,3 +100,4 @@ class Snapshot:
         group.add_argument('--snapshot-size', type=int, default=16, help='how many images to generate for each sample (must be <= batch-size)')
         group.add_argument('--sample-every', type=int, default=10, help='how often to sample images (in epochs)')
         group.add_argument('--sample-from-fixed-noise', action='store_true', help='always use the same input noise when sampling')
+        group.add_argument('--snapshot-translate', action='store_true', help='generate snapshots for an image translation task')

@@ -190,6 +190,43 @@ class GoodDiscriminator(nn.Module):
         x = x.view(batch_size, self.start * self.start * 8 * self.image_size)
         return self.fc(x).view(-1)
 
+@register('discriminator', 'patch-gan')
+class PatchGANDiscriminator(nn.Module):
+    '''
+    PatchGAN from
+        Phillip Isola, Jun-Yan Zhu, Tinghui Zhou, Alexei A. Efros
+        Image-to-Image Translation with Conditional Adversarial Networks
+        https://arxiv.org/abs/1611.07004
+
+    The patch size is 64.
+    '''
+    def __init__(self, options):
+        super(PatchGANDiscriminator, self).__init__()
+        d = options.discriminator_channels
+        self.conv1 = self.conv(6, d)
+        self.conv2 = self.conv(d, 2 * d)
+        self.batch_norm2 = nn.BatchNorm2d(2 * d)
+        self.conv3 = self.conv(2 * d, 4 * d)
+        self.batch_norm3 = nn.BatchNorm2d(4 * d)
+        self.conv4 = self.conv(4 * d, 8 * d)
+        self.batch_norm4 = nn.BatchNorm2d(8 * d)
+        self.conv5 = nn.Conv2d(8 * d, 1, kernel_size=4, stride=1, padding=0)
+
+    def conv(self, i, o):
+        return nn.Conv2d(i, o, kernel_size=4, stride=2, padding=1)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = F.leaky_relu(x, 0.2)
+        x = self.batch_norm2(self.conv2(x))
+        x = F.leaky_relu(x, 0.2)
+        x = self.batch_norm3(self.conv3(x))
+        x = F.leaky_relu(x, 0.2)
+        x = self.batch_norm4(self.conv4(x))
+        x = F.leaky_relu(x, 0.2)
+        x = F.sigmoid(self.conv5(x))
+        return torch.mean(torch.mean(x, dim=3), dim=2).squeeze()
+
 class Discriminator:
     @staticmethod
     def from_options(options):
@@ -210,3 +247,4 @@ class Discriminator:
         group.add_argument('--discriminator', choices=Registry.keys('discriminator'), default=Registry.default('discriminator'), help='type of discriminator')
         group.add_argument('--discriminator-dropout', type=float, help='dropout coefficient in discriminator layers')
         group.add_argument('--discriminator-layers', type=int, default=4, help='number of discriminator layers')
+        group.add_argument('--discriminator-channels', type=int, default=4, help='number of channels for the discriminator')

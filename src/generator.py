@@ -194,6 +194,58 @@ class GoodGenerator(nn.Module):
         x = self.tanh(x)
         return x.view(batch_size, 3, self.image_size, self.image_size)
 
+@register('generator', 'u-gen')
+class UGenerator(nn.Module):
+    '''
+    UGenerator from
+        Phillip Isola, Jun-Yan Zhu, Tinghui Zhou, Alexei A. Efros
+        Image-to-Image Translation with Conditional Adversarial Networks
+        https://arxiv.org/abs/1611.07004
+
+    Dropout is not used.
+    Image size must be a multiple of 2^layers.
+    '''
+    def __init__(self, options):
+        super(UGenerator, self).__init__()
+        d = options.generator_channels
+        self.layers = options.generator_layers
+        self.conv_in = nn.Conv2d(3, d, kernel_size=4, stride=2, padding=1)
+        self.convs = []
+        self.deconvs = []
+        self.bns = []
+        self.debns = []
+        for i in range(options.generator_layers):
+            c = 2 ** i
+            self.convs.append(nn.Conv2d(c * d, 2 * c * d, kernel_size=4, stride=2, padding=1))
+            self.deconvs.append(nn.ConvTranspose2d(4 * c * d, c * d, kernel_size=4, stride=2, padding=1))
+            self.bns.append(nn.BatchNorm2d(2 * c * d))
+            self.debns.append(nn.BatchNorm2d(c * d))
+            self.add_module(f'conv_{i}', self.convs[i])
+            self.add_module(f'bn_{i}', self.bns[i])
+            self.add_module(f'deconv_{i}', self.deconvs[i])
+            self.add_module(f'debn_{i}', self.debns[i])
+        self.deconv_out = nn.ConvTranspose2d(2 * d, 3, kernel_size=4, stride=2, padding=1)
+
+    def forward(self, x0):
+        xs = []
+        x_in = self.conv_in(x0)
+        x = x_in
+        for i in range(self.layers):
+            conv = self.convs[i]
+            bn = self.bns[i]
+            x = conv(F.leaky_relu(x, 0.2))
+            if i < self.layers - 1:
+                x = bn(x)
+            xs.append(x)
+        y = x
+        for i in range(self.layers, 0, -1):
+            deconv = self.deconvs[i-1]
+            debn = self.debns[i-1]
+            y_ = torch.cat((y, xs[i - 1]), dim=1)
+            y = debn(deconv(F.relu(y_)))
+        y_out = self.deconv_out(F.relu(torch.cat((y, x_in), dim=1)))
+        return F.tanh(y_out)
+
 class Generator:
     @staticmethod
     def from_options(options):
@@ -214,3 +266,4 @@ class Generator:
         group.add_argument('--generator', choices=Registry.keys('generator'), default=Registry.default('generator'), help='type of generator')
         group.add_argument('--generator-dropout', type=float, help='dropout coefficient in generator layers')
         group.add_argument('--generator-layers', type=int, default=4, help='number of generator layers')
+        group.add_argument('--generator-channels', type=int, default=8, help='number of channels for the generator')
