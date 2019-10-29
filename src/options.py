@@ -22,7 +22,7 @@ def _name(options):
     return sha1(json.dumps(vars(options), sort_keys=True).encode('utf8')).hexdigest()
 
 class Options:
-    def __init__(self):
+    def __init__(self, train=True):
         self.parser = argparse.ArgumentParser(description='GANzo')
         self.parser.add_argument('--from-json', help='load configuration from this JSON file')
         self.parser.add_argument('--experiment', help='experiment name, leave blank to autogenerate')
@@ -36,13 +36,14 @@ class Options:
         Data.add_options(self.parser)
         Generator.add_options(self.parser)
         Discriminator.add_options(self.parser)
-        Loss.add_options(self.parser)
         Noise.add_options(self.parser)
-        Hook.add_options(self.parser)
-        Statistics.add_options(self.parser)
         Snapshot.add_options(self.parser)
-        Evaluation.add_options(self.parser)
-        Game.add_options(self.parser)
+        if train:
+            Loss.add_options(self.parser)
+            Hook.add_options(self.parser)
+            Statistics.add_options(self.parser)
+            Evaluation.add_options(self.parser)
+            Game.add_options(self.parser)
         for f in Registry.option_functions():
             f(self.parser)
 

@@ -17,7 +17,7 @@ from options import Options
 
 
 if __name__ == '__main__':
-    option_loader = Options()
+    option_loader = Options(train=False)
     option_loader.parser.add_argument('--num-samples', type=int, default=1, help='number of samples to be generated')
 
     options = option_loader.from_command_line()
