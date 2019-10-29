@@ -75,6 +75,9 @@ Some options are global in nature:
 * `seed` this is the seed for PyTorch random number generator. This is used
   in order to reproduce results.
 * `from-json`: load configuration from this JSON file (see below)
+* `start-epoch`: the epoch to start with. By default it is 1, but it can make
+  sense to override this if you are restoring from a previous session of training,
+  so that statistics and snapshots will be assigned the correct epoch.
 
 ### Running from a JSON configuration file
 

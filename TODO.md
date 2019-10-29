@@ -30,8 +30,6 @@ For all existing experiments:
 * Make sure that Tensorboard logs and snapshots can be used simultaneously
 * Conditioned GAN
 * Make it run under Pipenv
-* Store the current epoch somewhere, so that if we restore an experiment, the
-  generated images do not overlap
 
 # Optimization
 
