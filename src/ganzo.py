@@ -19,15 +19,18 @@ from options import Options
 if __name__ == '__main__':
     option_loader = Options()
     options = option_loader.from_command_line()
+    restored_from_json = False
     if options.from_json is not None:
-        options = option_loader.from_json(options.from_json, parent=options)
+        options = option_loader.from_json_and_command_line(options.from_json)
+        restored_from_json = True
     print(options)
 
     model_dir = os.path.join(options.model_dir, options.experiment)
     json_path = os.path.join(model_dir, 'options.json')
     if os.path.exists(model_dir):
         if options.restore:
-            options = option_loader.from_json(json_path)
+            if not restored_from_json:
+                options = option_loader.from_json_and_command_line(json_path)
         elif options.delete:
             options.restore = False
         else:
@@ -43,7 +46,7 @@ if __name__ == '__main__':
                 except EOFError:
                     sys.exit(1)
                 if choice == 'r':
-                    options = option_loader.from_json(json_path)
+                    options = option_loader.from_json_and_command_line(json_path)
                     options.restore = True
                 elif choice == 'n':
                     options.restore = True

@@ -30,6 +30,7 @@ class Options:
         self.parser.add_argument('--seed', type=int, help='random number generator seed')
         if train:
             self.parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
+            self.parser.add_argument('--start-epoch', type=int, default=1, help='start counting from this epoch')
             self.parser.add_argument('--from-json', help='load configuration from this JSON file')
             self.parser.add_argument('--restore', action='store_true', help='restart training from the saved models')
             self.parser.add_argument('--delete', action='store_true', help='delete saved models without asking')

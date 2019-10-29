@@ -16,7 +16,7 @@ class BaseSnapshot:
         self.image_colors = options.image_colors
         self.sample_every = options.sample_every
         self.snapshot_size = options.snapshot_size
-        self.epoch = 1
+        self.epoch = options.start_epoch
         self.noise = None
         self.sample_from_fixed_noise = options.sample_from_fixed_noise
         self.snapshot_translate = options.snapshot_translate
@@ -75,7 +75,7 @@ if tensorboard_enabled:
         def __init__(self, options):
             super().__init__(options)
             self.writer = SummaryWriter(os.path.join(options.output_dir, options.experiment))
-            self.epoch = 1
+            self.epoch = options.start_epoch
 
         def save(self, dataloder, noiseloader, generator):
             if self.epoch % self.sample_every == 0:

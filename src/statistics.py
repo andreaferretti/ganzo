@@ -17,7 +17,7 @@ class NoStatistics:
 class ConsoleStatistics:
     def __init__(self, options):
         self.last_time = timer()
-        self.epoch = 1
+        self.epoch = options.start_epoch
 
     def log(self, losses):
         now = timer()
@@ -37,7 +37,7 @@ if tensorboard_enabled:
     class TensorBoardStatistics:
         def __init__(self, options):
             self.writer = SummaryWriter(os.path.join(options.output_dir, options.experiment))
-            self.epoch = 1
+            self.epoch = options.start_epoch
 
         def log(self, losses):
             for k, v in losses.items():
