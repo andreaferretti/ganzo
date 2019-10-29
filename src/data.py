@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
 
 from registry import Registry, RegistryError, register
+from utils import YesNoAction
 
 
 @register('data', 'single-image', default=True)
@@ -228,4 +229,4 @@ class Data:
         group.add_argument('--split', choices=['horizontal', 'vertical'], help='how to split an image pair')
         group.add_argument('--batch-size', type=int, default=64, help='batch size')
         group.add_argument('--loader-workers', type=int, default=4, help='number of threads loading data')
-        group.add_argument('--pin-memory', action='store_true', help='pin memory to CPU cores for loading data')
+        group.add_argument('--pin-memory', action=YesNoAction, help='pin memory to CPU cores for loading data')

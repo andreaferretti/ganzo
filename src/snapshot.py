@@ -6,6 +6,7 @@ import torch
 import torchvision
 
 from registry import Registry, RegistryError, register
+from utils import YesNoAction
 
 class BaseSnapshot:
     def __init__(self, options):
@@ -100,5 +101,5 @@ class Snapshot:
         group.add_argument('--output-dir', default='output', help='directory where to store the generated images')
         group.add_argument('--snapshot-size', type=int, default=16, help='how many images to generate for each sample (must be <= batch-size)')
         group.add_argument('--sample-every', type=int, default=10, help='how often to sample images (in epochs)')
-        group.add_argument('--sample-from-fixed-noise', action='store_true', help='always use the same input noise when sampling')
-        group.add_argument('--snapshot-translate', action='store_true', help='generate snapshots for an image translation task')
+        group.add_argument('--sample-from-fixed-noise', action=YesNoAction, help='always use the same input noise when sampling')
+        group.add_argument('--snapshot-translate', action=YesNoAction, help='generate snapshots for an image translation task')

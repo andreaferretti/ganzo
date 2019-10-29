@@ -116,6 +116,14 @@ to the models, although you can override specific options on the command line.
 Not all training options make sense at inference time, those that are not
 relevant are just ignored.
 
+Some options are just flags that may have been set a training time, for instance
+`--sample-from-fixed-noise`. If you need to override it, just prepend a `no` to
+the flag name, for instance
+
+```
+python src/deh.py --model-dir $MODELS --experiment $EXPERIMENT --num-samples 10 --no-sample-from-fixed-noise
+```
+
 ## Architecture
 
 Ganzo is structured into modules that handles different concerns: data loading,
