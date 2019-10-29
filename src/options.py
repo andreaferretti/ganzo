@@ -24,14 +24,15 @@ def _name(options):
 class Options:
     def __init__(self, train=True):
         self.parser = argparse.ArgumentParser(description='GANzo')
-        self.parser.add_argument('--from-json', help='load configuration from this JSON file')
         self.parser.add_argument('--experiment', help='experiment name, leave blank to autogenerate')
-        self.parser.add_argument('--device', help='device name, leave blank to autodetect')
-        self.parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
         self.parser.add_argument('--model-dir', default='models', help='directory where to store the models')
-        self.parser.add_argument('--restore', action='store_true', help='restart training from the saved models')
-        self.parser.add_argument('--delete', action='store_true', help='delete saved models without asking')
+        self.parser.add_argument('--device', help='device name, leave blank to autodetect')
         self.parser.add_argument('--seed', type=int, help='random number generator seed')
+        if train:
+            self.parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
+            self.parser.add_argument('--from-json', help='load configuration from this JSON file')
+            self.parser.add_argument('--restore', action='store_true', help='restart training from the saved models')
+            self.parser.add_argument('--delete', action='store_true', help='delete saved models without asking')
 
         Data.add_options(self.parser)
         Generator.add_options(self.parser)
