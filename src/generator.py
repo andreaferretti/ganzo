@@ -74,33 +74,33 @@ class ConvGenerator(nn.Module):
     def __init__(self, options):
         super(ConvGenerator, self).__init__()
         self.dropout = options.generator_dropout
+        self.layers = options.generator_layers
 
-        self.conv = []
-        self.batch_norm = []
         d = 8 * 8
 
-        self.conv.append(nn.ConvTranspose2d(options.state_size, d, kernel_size=4, stride=1, padding=0))
-        self.batch_norm.append(nn.BatchNorm2d(d))
-        self.add_module('conv_0', self.conv[0])
-        self.add_module('batch_norm_0', self.batch_norm[0])
+        self.add_module('conv_0', nn.ConvTranspose2d(options.state_size, d, kernel_size=4, stride=1, padding=0))
+        self.add_module('batch_norm_0', nn.BatchNorm2d(d))
         for i in range(1, options.generator_layers - 1):
-            self.conv.append(nn.ConvTranspose2d(d, d // 2, kernel_size=4, stride=2, padding=1))
-            self.batch_norm.append(nn.BatchNorm2d(d // 2))
-            self.add_module(f'conv_{i}', self.conv[i])
-            self.add_module(f'batch_norm_{i}', self.batch_norm[i])
+            self.add_module(f'conv_{i}', nn.ConvTranspose2d(d, d // 2, kernel_size=4, stride=2, padding=1))
+            self.add_module(f'batch_norm_{i}', nn.BatchNorm2d(d // 2))
             d //= 2
-        self.conv.append(nn.ConvTranspose2d(d, options.image_colors, kernel_size=4, stride=2, padding=1))
-        self.add_module(f'conv_{options.generator_layers - 1}', self.conv[-1])
+        self.add_module(f'conv_{options.generator_layers - 1}', nn.ConvTranspose2d(d, options.image_colors, kernel_size=4, stride=2, padding=1))
 
     def forward(self, x):
         batch_size = x.size()[0]
         x = x.view(batch_size, -1, 1, 1)
-        for conv, batch_norm in zip(self.conv, self.batch_norm):
+        layers = {}
+        for name, module in self.named_children():
+            layers[name] = module
+        for i in range(self.layers - 1):
+            conv = layers[f'conv_{i}']
+            batch_norm = layers[f'batch_norm_{i}']
             x = batch_norm(conv(x))
             x = F.relu(x)
             if self.dropout is not None:
                 x = F.dropout(x, self.dropout)
-        x = self.conv[-1](x)
+        last_conv = layers[f'conv_{self.layers - 1}']
+        x = last_conv(x)
         return torch.tanh(x)
 
 def _init_kaiming(m):

@@ -60,32 +60,32 @@ class ConvDiscriminator(nn.Module):
     def __init__(self, options):
         super(ConvDiscriminator, self).__init__()
         self.dropout = options.discriminator_dropout
+        self.layers = options.discriminator_layers
 
-        self.conv = []
-        self.batch_norm = []
         d = 8
 
-        self.conv.append(nn.Conv2d(options.image_colors, d, kernel_size=4, stride=2, padding=1))
-        self.batch_norm.append(nn.BatchNorm2d(d))
-        self.add_module('conv_0', self.conv[0])
-        self.add_module('batch_norm_0', self.batch_norm[0])
+        self.add_module('conv_0', nn.Conv2d(options.image_colors, d, kernel_size=4, stride=2, padding=1))
+        self.add_module('batch_norm_0', nn.BatchNorm2d(d))
         for i in range(1, options.discriminator_layers - 1):
-            self.conv.append(nn.Conv2d(d, 2 * d, kernel_size=4, stride=2, padding=1))
-            self.batch_norm.append(nn.BatchNorm2d(2 * d))
-            self.add_module(f'conv_{i}', self.conv[i])
-            self.add_module(f'batch_norm_{i}', self.batch_norm[i])
+            self.add_module(f'conv_{i}', nn.Conv2d(d, 2 * d, kernel_size=4, stride=2, padding=1))
+            self.add_module(f'batch_norm_{i}', nn.BatchNorm2d(2 * d))
             d *= 2
-        self.conv.append(nn.Conv2d(d, 1, kernel_size=4, stride=1, padding=0))
-        self.add_module(f'conv_{options.discriminator_layers - 1}', self.conv[-1])
+        self.add_module(f'conv_{options.discriminator_layers - 1}', nn.Conv2d(d, 1, kernel_size=4, stride=1, padding=0))
 
     def forward(self, x):
         batch_size = x.size()[0]
-        for conv, batch_norm in zip(self.conv, self.batch_norm):
+        layers = {}
+        for name, module in self.named_children():
+            layers[name] = module
+        for i in range(self.layers - 1):
+            conv = layers[f'conv_{i}']
+            batch_norm = layers[f'batch_norm_{i}']
             x = batch_norm(conv(x))
             x = F.leaky_relu(x, 0.2)
             if self.dropout is not None:
                 x = F.dropout(x, self.dropout)
-        x = self.conv[-1](x)
+        last_conv = layers[f'conv_{self.layers - 1}']
+        x = last_conv(x)
         return torch.sigmoid(x).view(batch_size, -1)
 
 def _init_kaiming(m):
