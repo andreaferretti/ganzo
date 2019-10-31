@@ -17,6 +17,7 @@ python src/ganzo.py \
   --generator-lr 0.0002 \
   --discriminator fc \
   --discriminator-layers 4 \
+  --discriminator-iterations 5 \
   --discriminator-dropout 0.3 \
   --discriminator-lr 0.0002 \
   --soft-labels \
