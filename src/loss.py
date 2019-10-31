@@ -135,7 +135,6 @@ class Pix2PixLoss(LossWithLabels):
         fake = self.cross_entropy(self.discriminator(fake_data), fake_labels)
         return real + fake
 
-
 class Loss:
     @staticmethod
     def from_options(options, discriminator):

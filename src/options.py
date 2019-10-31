@@ -16,6 +16,7 @@ from snapshot import Snapshot
 from evaluation import Evaluation
 from game import Game
 from registry import Registry
+from utils import YesNoAction
 
 
 def _name(options):
@@ -34,6 +35,7 @@ class Options:
             self.parser.add_argument('--from-json', help='load configuration from this JSON file')
             self.parser.add_argument('--restore', action='store_true', help='restart training from the saved models')
             self.parser.add_argument('--delete', action='store_true', help='delete saved models without asking')
+            self.parser.add_argument('--parallel', action=YesNoAction, help='train in parallel')
 
         Data.add_options(self.parser)
         Generator.add_options(self.parser)

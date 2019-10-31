@@ -10,28 +10,49 @@ from registry import Registry, RegistryError, register
 @register('discriminator', 'fc', default=True)
 class FCDiscriminator(nn.Module):
     def __init__(self, options):
+        '''
+        The fully connected generator is initialized by creating a chain of
+        fully connected layers that perform transformations
+
+            n * n -> 2^(k - 1) * d -> ... -> 2 * d -> 1
+
+        where
+            d = options.state_size
+            k = options.discriminator_layers
+            n = options.image_size
+        '''
         super(FCDiscriminator, self).__init__()
         self.dropout = options.discriminator_dropout
+        self.layers = options.discriminator_layers
 
+        sizes = [options.image_size * options.image_size]
         size = options.state_size * (2 ** (options.discriminator_layers - 1))
-        self.linear = []
-        self.linear.append(nn.Linear(options.image_size * options.image_size, size))
-        self.add_module('linear_0', self.linear[0])
-        for i in range(1, options.discriminator_layers - 1):
-            self.linear.append(nn.Linear(size, size // 2))
-            self.add_module(f'linear_{i}', self.linear[i])
-            size //= 2
-        self.linear.append(nn.Linear(size, 1))
-        self.add_module(f'linear_{options.discriminator_layers - 1}', self.linear[-1])
+        for i in range(options.discriminator_layers - 1):
+            sizes.append(size)
+            size //=2
+        sizes.append(1)
+
+        # Notice that the number of layers is variable, hence we cannot
+        # register them as fields on the module itself. The layers are
+        # explicitly registered calling `.add_module()`, and later retrieved
+        # by name. See `FCGenerator` to understand the reason why.
+        for i in range(options.discriminator_layers):
+            layer = nn.Linear(sizes[i], sizes[i + 1])
+            self.add_module(f'linear_{i}', layer)
 
     def forward(self, x):
         batch_size = x.size()[0]
         x = x.view(batch_size, -1)
-        for layer in self.linear[:-1]:
-            x = F.leaky_relu(layer(x), 0.2)
-            if self.dropout is not None:
-                x = F.dropout(x, self.dropout)
-        x = self.linear[-1](x)
+        layers = {}
+        for name, module in self.named_children():
+            layers[name] = module
+        for i in range(self.layers):
+            layer = layers[f'linear_{i}']
+            x = layer(x)
+            if i < self.layers - 1:
+                x = F.leaky_relu(x, 0.2)
+                if self.dropout is not None:
+                    x = F.dropout(x, self.dropout)
         return torch.sigmoid(x)
 
 @register('discriminator', 'conv')
@@ -239,6 +260,8 @@ class Discriminator:
             state_dict = torch.load(os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))
             discriminator.load_state_dict(state_dict)
         discriminator = discriminator.to(options.device)
+        if options.parallel:
+            discriminator = nn.DataParallel(discriminator)
         return discriminator
 
     @staticmethod

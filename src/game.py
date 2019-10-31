@@ -38,7 +38,7 @@ class StandardGame:
 
             for _ in range(self.generator_iterations):
                 self.generator.zero_grad()
-                noise = noiseloader.next().to(self.device)
+                noise = noiseloader.next()#.to(self.device)
                 noise.requires_grad_(True)
                 fake_data = self.generator(noise)
                 generator_loss = self.loss.for_generator(fake_data)
@@ -54,7 +54,7 @@ class StandardGame:
 
             for _ in range(self.discriminator_iterations):
                 self.discriminator.zero_grad()
-                noise = noiseloader.next().to(self.device)
+                noise = noiseloader.next()#.to(self.device)
                 fake_data = self.generator(noise).detach()
                 minibatch = dataloader.next()
                 if minibatch is None: # end of batch

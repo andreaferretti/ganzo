@@ -10,23 +10,63 @@ from registry import Registry, RegistryError, register
 @register('generator', 'fc', default=True)
 class FCGenerator(nn.Module):
     def __init__(self, options):
+        '''
+        The fully connected generator is initialized by creating a chain of
+        fully connected layers that perform transformations
+
+            d -> 2 * d -> ... -> 2^(k - 1) * d -> n * n
+
+        where
+            d = options.state_size
+            k = options.generator_layers
+            n = options.image_size
+        '''
         super(FCGenerator, self).__init__()
         self.dropout = options.generator_dropout
+        self.layers = options.generator_layers
+        sizes = []
         size = options.state_size
-        self.linear = []
-        for i in range(options.generator_layers - 1):
-            self.linear.append(nn.Linear(size, size * 2))
-            self.add_module(f'linear_{i}', self.linear[i])
-            size *= 2
-        self.linear.append(nn.Linear(size, options.image_size * options.image_size))
-        self.add_module(f'linear_{options.generator_layers - 1}', self.linear[-1])
+        for i in range(options.generator_layers):
+            sizes.append(size)
+            size *=2
+        sizes.append(options.image_size * options.image_size)
+        # Notice that the number of layers is variable, hence we cannot
+        # register them as fields on the module itself. The layers are
+        # explicitly registered calling `.add_module()`, and later retrieved
+        # by name. We could store them in a list, say `self.layers`, but we
+        # do **not** do that. The reason is that this would not allow us
+        # to parallelize the module.
+        #
+        # When we call `nn.DataParallel(module)`, PyTorch takes care of creating
+        # copies of the submodules on the various GPUs. The pointers in the list
+        # are not updated, though. This means that, if we performed forward
+        # propagation by doing something like
+        #
+        #     layer = self.layers[i]
+        #
+        # we would get a reference to a module that is not on the correct GPU.
+        # This leads to the error
+        #
+        #     RuntimeError: arguments are located on different GPUs
+        #
+        # To avoid this, we always retrieve layers by name in the `forward()`
+        # method. PyTorch takes care of giving us the reference to the
+        # correct copy on the module on the right GPU.
+        for i in range(options.generator_layers):
+            layer = nn.Linear(sizes[i], sizes[i + 1])
+            self.add_module(f'linear_{i}', layer)
 
     def forward(self, x):
-        for layer in self.linear[:-1]:
-            x = F.leaky_relu(layer(x), 0.2)
-            if self.dropout is not None:
-                x = F.dropout(x, self.dropout)
-        x = self.linear[-1](x)
+        layers = {}
+        for name, module in self.named_children():
+            layers[name] = module
+        for i in range(self.layers):
+            layer = layers[f'linear_{i}']
+            x = layer(x)
+            if i < self.layers - 1:
+                x = F.leaky_relu(x, 0.2)
+                if self.dropout is not None:
+                    x = F.dropout(x, self.dropout)
         return torch.tanh(x)
 
 @register('generator', 'conv')
@@ -258,6 +298,8 @@ class Generator:
             state_dict = torch.load(os.path.join(options.model_dir, options.experiment, 'generator.pt'))
             generator.load_state_dict(state_dict)
         generator = generator.to(options.device)
+        if options.parallel:
+            generator = nn.DataParallel(generator)
         return generator
 
     @staticmethod
