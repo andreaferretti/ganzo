@@ -64,6 +64,10 @@ class ConvDiscriminator(nn.Module):
 
         d = 8
 
+        # Notice that the number of layers is variable, hence we cannot
+        # register them as fields on the module itself. The layers are
+        # explicitly registered calling `.add_module()`, and later retrieved
+        # by name. See `FCGenerator` to understand the reason why.
         self.add_module('conv_0', nn.Conv2d(options.image_colors, d, kernel_size=4, stride=2, padding=1))
         self.add_module('batch_norm_0', nn.BatchNorm2d(d))
         for i in range(1, options.discriminator_layers - 1):

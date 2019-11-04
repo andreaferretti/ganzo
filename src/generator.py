@@ -78,6 +78,10 @@ class ConvGenerator(nn.Module):
 
         d = 8 * 8
 
+        # Notice that the number of layers is variable, hence we cannot
+        # register them as fields on the module itself. The layers are
+        # explicitly registered calling `.add_module()`, and later retrieved
+        # by name. See `FCGenerator` to understand the reason why.
         self.add_module('conv_0', nn.ConvTranspose2d(options.state_size, d, kernel_size=4, stride=1, padding=0))
         self.add_module('batch_norm_0', nn.BatchNorm2d(d))
         for i in range(1, options.generator_layers - 1):
