@@ -35,14 +35,30 @@ class SingleImage:
             Proceedings of the IEEE, 86(11):2278-2324, November 1998
             http://yann.lecun.com/exdb/publis/pdf/lecun-98.pdf
 
-            and available on http://yann.lecun.com/exdb/mnist/
+            and is available on http://yann.lecun.com/exdb/mnist/
+        * `emnist` expects images in the standard MNIST format (idx-ubyte). This
+            dataset is introduced in
+
+            Gregory Cohen, Saeed Afshar, Jonathan Tapson, and André van Schaik
+            EMNIST: an extension of MNIST to handwritten letters
+            https://arxiv.org/pdf/1702.05373.pdf
+
+            and is available on https://www.westernsydney.edu.au/bens/home/reproducible_research/emnist
+        * `fashion-mnist` expects images in the standard MNIST format (idx-ubyte). This
+            dataset is introduced in
+
+            Han Xiao, Kashif Rasul, Roland Vollgraf
+            Fashion-MNIST: a Novel Image Dataset for Benchmarking Machine Learning Algorithms
+            https://arxiv.org/abs/1708.07747
+
+            and is available on https://github.com/zalandoresearch/fashion-mnist
         * `lsun` expects the LSUN database. This dataset is introduced in
 
             Fisher Yu, Ari Seff, Yinda Zhang, Shuran Song, Thomas Funkhouser, Jianxiong Xiao
             LSUN: Construction of a Large-scale Image Dataset using Deep Learning with Humans in the Loop
             https://arxiv.org/abs/1506.03365
 
-            and available on https://www.yf.io/p/lsun
+            and is available on https://www.yf.io/p/lsun
         * `folder` expects a folder of images structured as follows
 
             base-folder
@@ -78,6 +94,12 @@ class SingleImage:
 
         if options.dataset == 'mnist':
             dataset = datasets.MNIST(options.data_dir, train=True, download=True, transform=transform)
+        elif options.dataset == 'emnist':
+            # Updated URL from https://www.westernsydney.edu.au/bens/home/reproducible_research/emnist
+            datasets.EMNIST.url = 'https://cloudstor.aarnet.edu.au/plus/s/ZNmuFiuQTqZlu9W/download'
+            dataset = datasets.EMNIST(options.data_dir, split=options.image_class, train=True, download=True, transform=transform)
+        elif options.dataset == 'fashion-mnist':
+            dataset = datasets.FashionMNIST(options.data_dir, train=True, download=True, transform=transform)
         elif options.dataset == 'lsun':
             training_class = options.image_class + '_train'
             dataset =  datasets.LSUN(options.data_dir, classes=[training_class], transform=transform)
@@ -222,8 +244,8 @@ class Data:
         group = parser.add_argument_group('data loading')
         group.add_argument('--data-format', choices=Registry.keys('data'), default=Registry.default('data'), help='type of dataset')
         group.add_argument('--data-dir', default='data', help='directory with the images')
-        group.add_argument('--dataset', choices=['folder', 'mnist', 'lsun'], default='folder', help='source of the dataset')
-        group.add_argument('--image-class', default='bedroom', help='class to train on, only for LSUN')
+        group.add_argument('--dataset', choices=['folder', 'mnist', 'emnist', 'fashion-mnist', 'lsun'], default='folder', help='source of the dataset')
+        group.add_argument('--image-class', help='class to train on, only for some datasets')
         group.add_argument('--image-size', type=int, default=64, help='image dimension')
         group.add_argument('--image-colors', type=int, default=3, help='image colors')
         group.add_argument('--split', choices=['horizontal', 'vertical'], help='how to split an image pair')
