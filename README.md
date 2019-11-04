@@ -78,6 +78,9 @@ Some options are global in nature:
 * `start-epoch`: the epoch to start with. By default it is 1, but it can make
   sense to override this if you are restoring from a previous session of training,
   so that statistics and snapshots will be assigned the correct epoch.
+* `parallel`: if this flag is active, the computation will be distributed across
+  all available GPUs. You can limit the visible GPUs by the environment variable
+  CUDA_VISIBLE_DEVICES
 
 ### Running from a JSON configuration file
 
