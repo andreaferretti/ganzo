@@ -16,7 +16,6 @@ For all existing experiments:
 
 * Colorization data loader (transform to luminance space etc)
 * New component type: Alternator - to decide when to switch between G and D
-* Logging to file
 * Make FC and Conv Generator and Discriminator more flexible
 * Energy based losses
 * Add a new component type to decide how to initialize layers?

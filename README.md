@@ -289,12 +289,15 @@ The module `statistics` defines the following classes:
 
 * `NoStatistics`: a class that just drops the logging information
 * `ConsoleStatistics`: a class that displays logging information on the console
+* `FileStatistics`: a class that writes logging information into a file
 * `TensorBoardStatistics`: a class that logs information via TensorBoard (requires
   TensorBoardX)
 
 The module `statistics` defines the following options:
 
-* `log`: either `none`, `console` or `tensorboard`
+* `log`: either `none`, `console`, `file` or `tensorboard`
+* `log-file`: when using `--log file` this determines the file where logs
+  are written. If missing, it defaults to `$OUTPUT_DIR/$EXPERIMENT/statistics.log`.
 
 ### Snapshot
 
