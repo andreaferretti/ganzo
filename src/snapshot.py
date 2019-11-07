@@ -5,7 +5,7 @@ import importlib
 import torch
 import torchvision
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 from utils import YesNoAction
 
 class BaseSnapshot:
@@ -95,7 +95,8 @@ class Snapshot:
             raise RegistryError(f'missing value {options.save_images_as} for namespace `snapshot`')
 
     @staticmethod
-    def add_options(parser):
+    @with_option_parser
+    def add_options(parser, train):
         group = parser.add_argument_group('result snapshotting')
         group.add_argument('--save-images-as', choices=Registry.keys('snapshot'), default=Registry.default('snapshot'), help='how to save the output images')
         group.add_argument('--output-dir', default='output', help='directory where to store the generated images')

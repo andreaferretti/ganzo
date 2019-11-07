@@ -426,7 +426,8 @@ Probably, your custom component will need some degrees of freedom that are not
 applicable in general, and this means that you need to be able to extend
 the command line parser. To do this, import the decorator `with_option_parser`
 from the `registry` module and define a function that takes a parser argument
-and extends it.
+and extends it. This function is also passed the `train` argument, which you
+can use to only activate certain options during training (or only during inference).
 
 It is advised to namespace your options into their own argument group, in order
 to make the help message more understandable. An example would be
@@ -435,9 +436,11 @@ to make the help message more understandable. An example would be
 from registry import with_option_parser
 
 @with_option_parser
-def add_my_custom_options(parser):
+def add_my_custom_options(parser, train):
     group = parser.add_argument_group('custom')
     group.add_argument('foos', type=int, default=3, help='the number of foos')
+    if train:
+        group.add_argument('bars', type=int, default=5, help='the number of bars')
 ```
 
 ## Using Ganzo as a library

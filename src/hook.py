@@ -1,6 +1,6 @@
 import torch
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('hook', 'weight-clipper')
@@ -41,8 +41,10 @@ class Hook:
         return hooks
 
     @staticmethod
-    def add_options(parser):
-        group = parser.add_argument_group('generator and discriminator hooks')
-        group.add_argument('--generator-hook', choices=Registry.keys('hook'), help='type of hook to apply to the discriminator')
-        group.add_argument('--discriminator-hook', choices=Registry.keys('hook'), help='type of hook to apply to the generator')
-        group.add_argument('--clip-to', type=float, default=0.001, help='amount to clip weights')
+    @with_option_parser
+    def add_options(parser, train):
+        if train:
+            group = parser.add_argument_group('generator and discriminator hooks')
+            group.add_argument('--generator-hook', choices=Registry.keys('hook'), help='type of hook to apply to the discriminator')
+            group.add_argument('--discriminator-hook', choices=Registry.keys('hook'), help='type of hook to apply to the generator')
+            group.add_argument('--clip-to', type=float, default=0.001, help='amount to clip weights')

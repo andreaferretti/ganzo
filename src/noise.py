@@ -1,6 +1,6 @@
 import torch
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('noise', 'gaussian', default=True)
@@ -41,7 +41,8 @@ class Noise:
             raise RegistryError(f'missing value {options.noise} for namespace `noise`')
 
     @staticmethod
-    def add_options(parser):
+    @with_option_parser
+    def add_options(parser, train):
         group = parser.add_argument_group('noise generation')
         group.add_argument('--noise', choices=Registry.keys('noise'), default=Registry.default('noise'), help='type of noise')
         group.add_argument('--state-size', type=int, default=128, help='state size')

@@ -1,6 +1,6 @@
 import torch
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('game', 'standard', default=True)
@@ -181,13 +181,15 @@ class Game:
             raise RegistryError(f'missing value {options.game} for namespace `game`')
 
     @staticmethod
-    def add_options(parser):
-        group = parser.add_argument_group('training options')
-        group.add_argument('--game', choices=Registry.keys('game'), default=Registry.default('game'), help='type of game')
-        group.add_argument('--generator-iterations', type=int, default=1, help='number of iterations for the generator')
-        group.add_argument('--discriminator-iterations', type=int, default=1, help='number of iterations for the discriminator')
-        group.add_argument('--generator-lr', type=float, default=1e-4, help='learning rate for the generator')
-        group.add_argument('--discriminator-lr', type=float, default=1e-4, help='learning rate for the discriminator')
-        group.add_argument('--beta1', type=float, default=0, help='first beta')
-        group.add_argument('--beta2', type=float, default=0.9, help='second beta')
-        group.add_argument('--max-batches-per-epoch', type=int, help='maximum number of minibatches per epoch')
+    @with_option_parser
+    def add_options(parser, train):
+        if train:
+            group = parser.add_argument_group('training options')
+            group.add_argument('--game', choices=Registry.keys('game'), default=Registry.default('game'), help='type of game')
+            group.add_argument('--generator-iterations', type=int, default=1, help='number of iterations for the generator')
+            group.add_argument('--discriminator-iterations', type=int, default=1, help='number of iterations for the discriminator')
+            group.add_argument('--generator-lr', type=float, default=1e-4, help='learning rate for the generator')
+            group.add_argument('--discriminator-lr', type=float, default=1e-4, help='learning rate for the discriminator')
+            group.add_argument('--beta1', type=float, default=0, help='first beta')
+            group.add_argument('--beta2', type=float, default=0.9, help='second beta')
+            group.add_argument('--max-batches-per-epoch', type=int, help='maximum number of minibatches per epoch')

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('discriminator', 'fc', default=True)
@@ -269,7 +269,8 @@ class Discriminator:
         return discriminator
 
     @staticmethod
-    def add_options(parser):
+    @with_option_parser
+    def add_options(parser, train):
         group = parser.add_argument_group('discriminator')
         group.add_argument('--discriminator', choices=Registry.keys('discriminator'), default=Registry.default('discriminator'), help='type of discriminator')
         group.add_argument('--discriminator-dropout', type=float, help='dropout coefficient in discriminator layers')
