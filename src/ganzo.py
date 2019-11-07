@@ -6,6 +6,7 @@ import torch
 from data import Data
 from generator import Generator
 from discriminator import Discriminator
+from replica import Replica
 from loss import Loss
 from noise import Noise
 from hook import Hook
@@ -60,20 +61,21 @@ if __name__ == '__main__':
         torch.random.manual_seed(options.seed)
 
     data = Data.from_options(options)
-    generator = Generator.from_options(options)
-    discriminator = Discriminator.from_options(options)
+    replica = Replica.from_options(options)
+    generators = replica.generators(options)
+    discriminators = replica.generators(options)
     loss = Loss.from_options(options, discriminator)
     noise = Noise.from_options(options)
     hooks = Hook.from_options(options)
     statistics = Statistics.from_options(options)
     snapshot = Snapshot.from_options(options)
     evaluation = Evaluation.from_options(options)
-    game = Game.from_options(options, generator, discriminator, loss, hooks)
+    game = Game.from_options(options, generators, discriminators, loss, hooks)
 
     for _ in range(options.epochs):
         losses = game.run_epoch(data, noise)
         statistics.log(losses)
-        snapshot.save(data, noise, generator)
+        snapshot.save(data, noise, generators)
         if evaluation.has_improved(losses):
             torch.save(generator.state_dict(), os.path.join(options.model_dir, options.experiment, 'generator.pt'))
             torch.save(discriminator.state_dict(), os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))

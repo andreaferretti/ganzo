@@ -8,6 +8,7 @@ import torch
 from data import Data
 from generator import Generator
 from discriminator import Discriminator
+from replica import Replica
 from loss import Loss
 from noise import Noise
 from hook import Hook
@@ -40,6 +41,7 @@ class Options:
         Data.add_options(self.parser)
         Generator.add_options(self.parser)
         Discriminator.add_options(self.parser)
+        Replica.add_options(self.parser)
         Noise.add_options(self.parser)
         Snapshot.add_options(self.parser)
         if train:

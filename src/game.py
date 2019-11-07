@@ -5,10 +5,10 @@ from registry import Registry, RegistryError, register
 
 @register('game', 'standard', default=True)
 class StandardGame:
-    def __init__(self, options, generator, discriminator, loss, hooks):
+    def __init__(self, options, generators, discriminators, loss, hooks):
         self.device = torch.device(options.device)
-        self.generator = generator
-        self.discriminator = discriminator
+        self.generator = generators[0]
+        self.discriminator = discriminators[0]
         self.loss = loss
         self.hooks = hooks
         self.generator_iterations = options.generator_iterations
@@ -82,10 +82,10 @@ class StandardGame:
 
 @register('game', 'translate')
 class TranslateGame:
-    def __init__(self, options, generator, discriminator, loss, hooks):
+    def __init__(self, options, generators, discriminators, loss, hooks):
         self.device = torch.device(options.device)
-        self.generator = generator
-        self.discriminator = discriminator
+        self.generator = generators[0]
+        self.discriminator = discriminators[0]
         self.loss = loss
         self.hooks = hooks
         self.generator_iterations = options.generator_iterations
