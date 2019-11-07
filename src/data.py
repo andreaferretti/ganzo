@@ -3,7 +3,7 @@ import os
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 from utils import YesNoAction
 
 
@@ -240,7 +240,8 @@ class Data:
             raise RegistryError(f'missing value {options.data_format} for namespace `data`')
 
     @staticmethod
-    def add_options(parser):
+    @with_option_parser
+    def add_options(parser, train):
         group = parser.add_argument_group('data loading')
         group.add_argument('--data-format', choices=Registry.keys('data'), default=Registry.default('data'), help='type of dataset')
         group.add_argument('--data-dir', default='data', help='directory with the images')

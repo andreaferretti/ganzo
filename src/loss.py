@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch import autograd
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 from utils import YesNoAction
 
 
@@ -145,11 +145,13 @@ class Loss:
             raise RegistryError(f'missing value {options.loss} for namespace `loss`')
 
     @staticmethod
-    def add_options(parser):
-        group = parser.add_argument_group('loss computation')
-        group.add_argument('--loss', choices=Registry.keys('loss'), default=Registry.default('loss'), help='GAN loss')
-        group.add_argument('--gradient-penalty-factor', type=float, default=10, help='gradient penalty factor (lambda in WGAN-GP)')
-        group.add_argument('--soft-labels', action=YesNoAction, help='use soft labels in GAN loss')
-        group.add_argument('--noisy-labels', action=YesNoAction, help='use noisy labels in GAN loss')
-        group.add_argument('--noisy-labels-frequency', type=float, default=0.1, help='how often to use noisy labels in GAN loss')
-        group.add_argument('--l1-weight', type=float, default=1, help='weight of the L1 distance contribution to the GAN loss')
+    @with_option_parser
+    def add_options(parser, train):
+        if train:
+            group = parser.add_argument_group('loss computation')
+            group.add_argument('--loss', choices=Registry.keys('loss'), default=Registry.default('loss'), help='GAN loss')
+            group.add_argument('--gradient-penalty-factor', type=float, default=10, help='gradient penalty factor (lambda in WGAN-GP)')
+            group.add_argument('--soft-labels', action=YesNoAction, help='use soft labels in GAN loss')
+            group.add_argument('--noisy-labels', action=YesNoAction, help='use noisy labels in GAN loss')
+            group.add_argument('--noisy-labels-frequency', type=float, default=0.1, help='how often to use noisy labels in GAN loss')
+            group.add_argument('--l1-weight', type=float, default=1, help='weight of the L1 distance contribution to the GAN loss')

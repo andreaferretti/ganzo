@@ -5,17 +5,6 @@ from hashlib import sha1
 
 import torch
 
-from data import Data
-from generator import Generator
-from discriminator import Discriminator
-from replica import Replica
-from loss import Loss
-from noise import Noise
-from hook import Hook
-from statistics import Statistics
-from snapshot import Snapshot
-from evaluation import Evaluation
-from game import Game
 from registry import Registry
 from utils import YesNoAction
 
@@ -30,28 +19,16 @@ class Options:
         self.parser.add_argument('--model-dir', default='models', help='directory where to store the models')
         self.parser.add_argument('--device', help='device name, leave blank to autodetect')
         self.parser.add_argument('--seed', type=int, help='random number generator seed')
+        self.parser.add_argument('--start-epoch', type=int, default=1, help='start counting from this epoch')
         if train:
-            self.parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
-            self.parser.add_argument('--start-epoch', type=int, default=1, help='start counting from this epoch')
             self.parser.add_argument('--from-json', help='load configuration from this JSON file')
+            self.parser.add_argument('--parallel', action=YesNoAction, help='train in parallel')
+            self.parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
             self.parser.add_argument('--restore', action='store_true', help='restart training from the saved models')
             self.parser.add_argument('--delete', action='store_true', help='delete saved models without asking')
-            self.parser.add_argument('--parallel', action=YesNoAction, help='train in parallel')
 
-        Data.add_options(self.parser)
-        Generator.add_options(self.parser)
-        Discriminator.add_options(self.parser)
-        Replica.add_options(self.parser)
-        Noise.add_options(self.parser)
-        Snapshot.add_options(self.parser)
-        if train:
-            Loss.add_options(self.parser)
-            Hook.add_options(self.parser)
-            Statistics.add_options(self.parser)
-            Evaluation.add_options(self.parser)
-            Game.add_options(self.parser)
         for f in Registry.option_functions():
-            f(self.parser)
+            f(self.parser, train)
 
     def from_command_line(self):
         options = self.parser.parse_args()

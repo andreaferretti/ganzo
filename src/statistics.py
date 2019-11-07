@@ -2,7 +2,7 @@ import os
 import importlib
 from timeit import default_timer as timer
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('log', 'none')
@@ -74,7 +74,9 @@ class Statistics:
             raise RegistryError(f'missing value {options.log} for namespace `log`')
 
     @staticmethod
-    def add_options(parser):
-        group = parser.add_argument_group('logging')
-        group.add_argument('--log', choices=Registry.keys('log'), default=Registry.default('log'), help='logging format')
-        group.add_argument('--log-file', help='file to log statistics')
+    @with_option_parser
+    def add_options(parser, train):
+        if train:
+            group = parser.add_argument_group('logging')
+            group.add_argument('--log', choices=Registry.keys('log'), default=Registry.default('log'), help='logging format')
+            group.add_argument('--log-file', help='file to log statistics')

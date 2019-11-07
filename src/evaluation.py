@@ -1,6 +1,6 @@
 import math
 
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('evaluation', 'latest', default=True)
@@ -34,6 +34,8 @@ class Evaluation:
             raise RegistryError(f'missing value {options.evaluation_criterion} for namespace `evaluation`')
 
     @staticmethod
-    def add_options(parser):
-        group = parser.add_argument_group('model evaluation')
-        group.add_argument('--evaluation-criterion', choices=Registry.keys('evaluation'), default=Registry.default('evaluation'), help='the criterion to evaluate model improvement')
+    @with_option_parser
+    def add_options(parser, train):
+        if train:
+            group = parser.add_argument_group('model evaluation')
+            group.add_argument('--evaluation-criterion', choices=Registry.keys('evaluation'), default=Registry.default('evaluation'), help='the criterion to evaluate model improvement')

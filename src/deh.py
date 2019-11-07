@@ -29,6 +29,7 @@ if __name__ == '__main__':
         print('Missing model directory: {model_dir}')
         sys.exit(1)
     options.restore = True
+    options.parallel = False
     options.sample_every = 1
     print(options)
 

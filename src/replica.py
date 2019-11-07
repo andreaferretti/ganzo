@@ -1,4 +1,4 @@
-from registry import Registry, RegistryError, register
+from registry import Registry, RegistryError, register, with_option_parser
 from generator import Generator
 from discriminator import Discriminator
 
@@ -45,7 +45,8 @@ class Replica:
             raise RegistryError(f'missing value {options.replica} for namespace `replica`')
 
     @staticmethod
-    def add_options(parser):
+    @with_option_parser
+    def add_options(parser, train):
         group = parser.add_argument_group('replication logic')
         group.add_argument('--replica', choices=Registry.keys('replica'), default=Registry.default('replica'), help='type of replication')
         group.add_argument('--num-replicas', type=int, default=2, help='number of replicas')
