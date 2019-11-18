@@ -5,22 +5,22 @@ from registry import Registry, RegistryError, register, with_option_parser
 
 @register('game', 'standard', default=True)
 class StandardGame:
-    def __init__(self, options, generators, discriminators, loss, hooks):
+    def __init__(self, options, generators, discriminators, losses, hooks):
         self.device = torch.device(options.device)
-        self.generator = generators[0]
-        self.discriminator = discriminators[0]
-        self.loss = loss
+        self.generator = generators['generator']
+        self.discriminator = discriminators['discriminator']
+        self.loss = losses['discriminator']
         self.hooks = hooks
         self.generator_iterations = options.generator_iterations
         self.discriminator_iterations = options.discriminator_iterations
         self.max_batches_per_epoch = options.max_batches_per_epoch
         self.generator_optimizer = torch.optim.Adam(
-            generator.parameters(),
+            self.generator.parameters(),
             lr=options.generator_lr,
             betas=(options.beta1, options.beta2)
         )
         self.discriminator_optimizer = torch.optim.Adam(
-            discriminator.parameters(),
+            self.discriminator.parameters(),
             lr=options.discriminator_lr,
             betas=(options.beta1, options.beta2)
         )

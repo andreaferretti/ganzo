@@ -63,19 +63,19 @@ if __name__ == '__main__':
     data = Data.from_options(options)
     replica = Replica.from_options(options)
     generators = replica.generators(options)
-    discriminators = replica.generators(options)
-    loss = Loss.from_options(options, discriminator)
+    discriminators = replica.discriminators(options)
+    losses = { key: Loss.from_options(options, discriminator) for key, discriminator in discriminators.items() }
     noise = Noise.from_options(options)
     hooks = Hook.from_options(options)
     statistics = Statistics.from_options(options)
     snapshot = Snapshot.from_options(options)
     evaluation = Evaluation.from_options(options)
-    game = Game.from_options(options, generators, discriminators, loss, hooks)
+    game = Game.from_options(options, generators, discriminators, losses, hooks)
 
     for _ in range(options.epochs):
-        losses = game.run_epoch(data, noise)
-        statistics.log(losses)
+        results = game.run_epoch(data, noise)
+        statistics.log(results)
         snapshot.save(data, noise, generators)
-        if evaluation.has_improved(losses):
+        if evaluation.has_improved(results):
             torch.save(generator.state_dict(), os.path.join(options.model_dir, options.experiment, 'generator.pt'))
             torch.save(discriminator.state_dict(), os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))
