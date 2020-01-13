@@ -9,14 +9,10 @@ class SingleReplica:
         pass
 
     def generators(self, options):
-        return {
-            'generator': Generator.from_options(options)
-        }
+        return [Generator.from_options(options)]
 
     def discriminators(self, options):
-        return {
-            'discriminator': Discriminator.from_options(options)
-        }
+        return [Discriminator.from_options(options)]
 
 @register('replica', 'equal')
 class EqualReplicas:
@@ -24,16 +20,10 @@ class EqualReplicas:
         self.num_replicas = options.num_replicas
 
     def generators(self, options):
-        result = {}
-        for i in range(1, self.num_replicas + 1):
-            result[f'generator_{i}'] = Generator.from_options(options)
-        return result
+        return [Generator.from_options(options, i) for i in range(self.num_replicas)]
 
     def discriminators(self, options):
-        result = {}
-        for i in range(1, self.num_replicas + 1):
-            result[f'discriminator_{i}'] = Discriminator.from_options(options)
-        return result
+        return [Discriminator.from_options(options, i) for i in range(self.num_replicas)]
 
 class Replica:
     @staticmethod

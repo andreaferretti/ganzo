@@ -254,14 +254,14 @@ class PatchGANDiscriminator(nn.Module):
 
 class Discriminator:
     @staticmethod
-    def from_options(options):
+    def from_options(options, index=0):
         if options.discriminator in Registry.keys('discriminator'):
             cls = Registry.get('discriminator', options.discriminator)
             discriminator = cls(options)
         else:
             raise RegistryError(f'missing value {options.discriminator} for namespace `discriminator`')
         if options.restore:
-            state_dict = torch.load(os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))
+            state_dict = torch.load(os.path.join(options.model_dir, options.experiment, f'discriminator-{index}.pt'))
             discriminator.load_state_dict(state_dict)
         discriminator = discriminator.to(options.device)
         if options.parallel:

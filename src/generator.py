@@ -292,14 +292,14 @@ class UGenerator(nn.Module):
 
 class Generator:
     @staticmethod
-    def from_options(options):
+    def from_options(options, index=0):
         if options.generator in Registry.keys('generator'):
             cls = Registry.get('generator', options.generator)
             generator = cls(options)
         else:
             raise RegistryError(f'missing value {options.generator} for namespace `generator`')
         if options.restore:
-            state_dict = torch.load(os.path.join(options.model_dir, options.experiment, 'generator.pt'))
+            state_dict = torch.load(os.path.join(options.model_dir, options.experiment, f'generator-{index}.pt'))
             generator.load_state_dict(state_dict)
         generator = generator.to(options.device)
         if options.parallel:

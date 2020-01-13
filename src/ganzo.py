@@ -64,7 +64,7 @@ if __name__ == '__main__':
     replica = Replica.from_options(options)
     generators = replica.generators(options)
     discriminators = replica.discriminators(options)
-    losses = { key: Loss.from_options(options, discriminator) for key, discriminator in discriminators.items() }
+    losses = [Loss.from_options(options, discriminator) for discriminator in discriminators]
     noise = Noise.from_options(options)
     hooks = Hook.from_options(options)
     statistics = Statistics.from_options(options)
@@ -77,5 +77,7 @@ if __name__ == '__main__':
         statistics.log(results)
         snapshot.save(data, noise, generators)
         if evaluation.has_improved(results):
-            torch.save(generator.state_dict(), os.path.join(options.model_dir, options.experiment, 'generator.pt'))
-            torch.save(discriminator.state_dict(), os.path.join(options.model_dir, options.experiment, 'discriminator.pt'))
+            for i, generator in enumerate(generators):
+                torch.save(generator.state_dict(), os.path.join(options.model_dir, options.experiment, f'generator-{i}.pt'))
+            for i, discriminator in enumerate(discriminators):
+                torch.save(discriminator.state_dict(), os.path.join(options.model_dir, options.experiment, f'discriminator-{i}.pt'))

@@ -58,9 +58,15 @@ class FolderSnapshot(BaseSnapshot):
         self.base_dir = os.path.join(options.output_dir, options.experiment)
         os.makedirs(self.base_dir, exist_ok=True)
 
-    def save(self, dataloder, noiseloader, generator):
+    def save(self, dataloder, noiseloader, generators):
         if self.epoch % self.sample_every == 0:
-            samples = self._samples(dataloder, noiseloader, generator)
+            samples = None
+            for generator in generators:
+                more_samples = self._samples(dataloder, noiseloader, generator)
+                if samples is None:
+                    samples = more_samples
+                else:
+                    samples = torch.cat((samples, more_samples), dim=0)
 
             torchvision.utils.save_image(samples, os.path.join(self.base_dir, f'epoch_{self.epoch}.png'), nrow=self.nrows, padding=2)
         self.epoch += 1
@@ -79,7 +85,13 @@ if tensorboard_enabled:
 
         def save(self, dataloder, noiseloader, generator):
             if self.epoch % self.sample_every == 0:
-                samples = self._samples(dataloder, noiseloader, generator)
+                samples = None
+                for generator in generators:
+                    more_samples = self._samples(dataloder, noiseloader, generator)
+                    if samples is None:
+                        samples = more_samples
+                    else:
+                        samples = torch.cat((samples, more_samples), dim=0)
 
                 grid = torchvision.utils.make_grid(samples, nrow=self.nrows, padding=2)
                 self.writer.add_image('images', grid, self.epoch)
