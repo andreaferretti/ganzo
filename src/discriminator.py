@@ -96,7 +96,7 @@ class FCMaxoutDiscriminator(nn.Module):
             layer = nn.Linear(sizes[i], sizes[i + 1] * options.discriminator_maxout_size)
             self.add_module(f'linear_{i}', layer)
         layer = nn.Linear(sizes[-1], 1)
-        self.add_module(f'linear_{len(options.discriminator_layers) - 1}', layer)
+        self.add_module(f'linear_{options.discriminator_layers - 1}', layer)
 
         self.maxout = Maxout(options.discriminator_maxout_size)
 

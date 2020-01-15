@@ -22,7 +22,7 @@ python src/ganzo.py \
   --discriminator-maxout-size 5 \
   --discriminator-iterations 1 \
   --discriminator-dropout 0.3 \
-  --discriminator-lr 0.1
+  --discriminator-lr 0.1 \
   --epochs 100 \
   --sample-every 1 \
   --sample-from-fixed-noise
