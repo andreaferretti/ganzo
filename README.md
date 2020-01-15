@@ -234,6 +234,7 @@ This module defines the various generator architectures.
 The module `generator` defines the following classes:
 
 * `FCGenerator` TODO describe it
+* `ConstantFCGenerator` TODO describe it
 * `ConvGenerator` TODO describe it
 * `GoodGenerator` TODO describe it
 
@@ -243,6 +244,8 @@ The module `generator` exports the following options:
 * `generator-dropout`: the amount of dropout to use between generator layers -
   leave unspecified to avoid using dropout
 * `generator-layers`: how many layers to use in the generator
+* `generator-layer-size`: size of the generator layers, for models with a
+  constant layer size
 
 ### Discriminator
 
@@ -251,6 +254,7 @@ This module defines the various generator architectures.
 The module `discriminator` defines the following classes:
 
 * `FCDiscriminator` TODO describe it
+* `FCMaxoutDiscriminator` TODO describe it
 * `ConvDiscriminator` TODO describe it
 * `GoodDiscriminator` TODO describe it
 
@@ -260,6 +264,9 @@ The module `discriminator` exports the following options:
 * `discriminator-dropout`: the amount of dropout to use between discriminator
   layers - leave unspecified to avoid using dropout
 * `discriminator-layers`: how many layers to use in the discriminator
+* `discriminator-layer-size`: size of the discriminator layers, for models with a
+  constant layer size
+* `discriminator-maxout-size`: size of the pool in maxout layers (when present)
 
 ### Loss
 

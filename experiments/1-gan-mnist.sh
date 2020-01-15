@@ -12,16 +12,17 @@ python src/ganzo.py \
   --image-size 28 \
   --image-colors 1 \
   --loss gan \
-  --generator fc \
-  --generator-layers 4 \
-  --generator-lr 0.0002 \
-  --discriminator fc \
-  --discriminator-layers 4 \
-  --discriminator-iterations 5 \
+  --generator constant-fc \
+  --generator-layers 3 \
+  --generator-layer-size 1200 \
+  --generator-lr 0.1 \
+  --discriminator fc-maxout \
+  --discriminator-layers 3 \
+  --discriminator-layer-size 240 \
+  --discriminator-maxout-size 5 \
+  --discriminator-iterations 1 \
   --discriminator-dropout 0.3 \
-  --discriminator-lr 0.0002 \
-  --soft-labels \
-  --noisy-labels \
+  --discriminator-lr 0.1
   --epochs 100 \
   --sample-every 1 \
   --sample-from-fixed-noise

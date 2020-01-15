@@ -69,6 +69,49 @@ class FCGenerator(nn.Module):
                     x = F.dropout(x, self.dropout)
         return torch.tanh(x)
 
+@register('generator', 'constant-fc')
+class ConstantFCGenerator(nn.Module):
+    def __init__(self, options):
+        '''
+        The fully connected generator is initialized by creating a chain of k
+        fully connected layers that perform transformations
+
+            d -> s -> ... -> s -> n * n
+
+        where
+            d = options.state_size
+            k = options.generator_layers
+            s = options.generator_layer_size
+            n = options.image_size
+        '''
+        super().__init__()
+        self.dropout = options.generator_dropout
+        self.layers = options.generator_layers
+        sizes = [options.state_size]
+        for i in range(options.generator_layers - 1):
+            sizes.append(options.generator_layer_size)
+        sizes.append(options.image_size * options.image_size)
+        # Notice that the number of layers is variable, hence we cannot
+        # register them as fields on the module itself. The layers are
+        # explicitly registered calling `.add_module()`, and later retrieved
+        # by name. See `FCGenerator` to understand the reason why.
+        for i in range(options.generator_layers):
+            layer = nn.Linear(sizes[i], sizes[i + 1])
+            self.add_module(f'linear_{i}', layer)
+
+    def forward(self, x):
+        layers = {}
+        for name, module in self.named_children():
+            layers[name] = module
+        for i in range(self.layers):
+            layer = layers[f'linear_{i}']
+            x = layer(x)
+            if i < self.layers - 1:
+                x = F.relu(x)
+                if self.dropout is not None:
+                    x = F.dropout(x, self.dropout)
+        return torch.sigmoid(x)
+
 @register('generator', 'conv')
 class ConvGenerator(nn.Module):
     def __init__(self, options):
@@ -313,4 +356,5 @@ class Generator:
         group.add_argument('--generator', choices=Registry.keys('generator'), default=Registry.default('generator'), help='type of generator')
         group.add_argument('--generator-dropout', type=float, help='dropout coefficient in generator layers')
         group.add_argument('--generator-layers', type=int, default=4, help='number of generator layers')
+        group.add_argument('--generator-layer-size', type=int, default=100, help='size of the generator layers')
         group.add_argument('--generator-channels', type=int, default=8, help='number of channels for the generator')

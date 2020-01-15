@@ -55,6 +55,66 @@ class FCDiscriminator(nn.Module):
                     x = F.dropout(x, self.dropout)
         return torch.sigmoid(x)
 
+class Maxout(nn.Module):
+    def __init__(self, pool_size):
+        super().__init__()
+        self._pool_size = pool_size
+
+    def forward(self, x):
+        assert x.shape[1] % self._pool_size == 0, 'Wrong input last dim size ({}) for Maxout({})'.format(x.shape[1], self._pool_size)
+        m, i = x.view(*x.shape[:1], x.shape[1] // self._pool_size, self._pool_size, *x.shape[2:]).max(2)
+        return m
+
+@register('discriminator', 'fc-maxout')
+class FCMaxoutDiscriminator(nn.Module):
+    def __init__(self, options):
+        '''
+        The fully connected generator is initialized by creating a chain of k
+        fully connected layers that perform transformations
+
+            n * n -> s -> ... -> s -> 1
+
+        where
+            d = options.state_size
+            k = options.discriminator_layers
+            s = options.discriminator_layer_size
+            n = options.image_size
+        '''
+        super().__init__()
+        self.dropout = options.discriminator_dropout
+        self.layers = options.discriminator_layers
+
+        sizes = [options.image_size * options.image_size]
+        for i in range(options.generator_layers - 1):
+            sizes.append(options.discriminator_layer_size)
+
+        # Notice that the number of layers is variable, hence we cannot
+        # register them as fields on the module itself. The layers are
+        # explicitly registered calling `.add_module()`, and later retrieved
+        # by name. See `FCGenerator` to understand the reason why.
+        for i in range(options.discriminator_layers - 1):
+            layer = nn.Linear(sizes[i], sizes[i + 1] * options.discriminator_maxout_size)
+            self.add_module(f'linear_{i}', layer)
+        layer = nn.Linear(sizes[-1], 1)
+        self.add_module(f'linear_{len(options.discriminator_layers) - 1}', layer)
+
+        self.maxout = Maxout(options.discriminator_maxout_size)
+
+    def forward(self, x):
+        batch_size = x.size()[0]
+        x = x.view(batch_size, -1)
+        layers = {}
+        for name, module in self.named_children():
+            layers[name] = module
+        for i in range(self.layers):
+            layer = layers[f'linear_{i}']
+            x = layer(x)
+            if i < self.layers - 1:
+                x = self.maxout(x)
+                if self.dropout is not None:
+                    x = F.dropout(x, self.dropout)
+        return torch.sigmoid(x)
+
 @register('discriminator', 'conv')
 class ConvDiscriminator(nn.Module):
     def __init__(self, options):
@@ -275,4 +335,6 @@ class Discriminator:
         group.add_argument('--discriminator', choices=Registry.keys('discriminator'), default=Registry.default('discriminator'), help='type of discriminator')
         group.add_argument('--discriminator-dropout', type=float, help='dropout coefficient in discriminator layers')
         group.add_argument('--discriminator-layers', type=int, default=4, help='number of discriminator layers')
+        group.add_argument('--discriminator-layer-size', type=int, default=100, help='size of the discriminator layers')
+        group.add_argument('--discriminator-maxout-size', type=int, default=5, help='size of the pool for maxout layers')
         group.add_argument('--discriminator-channels', type=int, default=4, help='number of channels for the discriminator')
