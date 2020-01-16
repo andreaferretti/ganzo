@@ -15,6 +15,14 @@ The guiding principles are:
 * be usable as a library
 * allow for reproducible experiments
 
+## Experiments
+
+Some examples of configuration are available in the `experiments` folder,
+together with their output. For instance, a WGAN with gradient penalty running
+on the bedrooms dataset produces
+
+![wgan-gp-bedrooms](./experiments/4-wgan-gp-bedrooms.png)
+
 ## Installing
 
 The only hard dependencies for Ganzo are PyTorch and TorchVision. For instance,
