@@ -16,14 +16,17 @@ python src/ganzo.py \
   --generator constant-fc \
   --generator-layers 3 \
   --generator-layer-size 1200 \
-  --generator-lr 0.01 \
+  --generator-lr 0.1 \
   --discriminator fc-maxout \
   --discriminator-layers 3 \
   --discriminator-layer-size 240 \
   --discriminator-maxout-size 5 \
   --discriminator-iterations 1 \
   --discriminator-dropout 0.3 \
-  --discriminator-lr 0.01 \
+  --discriminator-lr 0.1 \
+  --batch-size 100 \
+  --soft-labels \
+  --noisy-labels \
   --epochs 100 \
   --sample-every 1 \
   --sample-from-fixed-noise
