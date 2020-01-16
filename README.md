@@ -369,6 +369,31 @@ The module `evaluation` defines the following options:
 
 ### Game
 
+This module defines classes that implement the actual GAN logic, which has a few
+variants.
+
+The module `game` defines the following classes:
+
+* `StandardGame`: the usual GAN game that opposes a generator, taking random
+  noise as input, and a discriminator to learn classify real and fake samples
+* `TranslateGame`: a game that uses the generator to perform an image translation
+  task. This is different from `StandardGame`, since the generator receives
+  as input real images from a given domain, and needs to produce as output
+  images in a different domain. The discriminator learns to classify real and
+  fake samples, but both are overlaid to the original input, in order to
+  evaluate the quality of the translation.
+
+The module `game` defines the following options:
+
+* `evaluation-criterion`: either `standard` or `translate`
+* `generator-iterations`: number of iterations on each turn for the generator
+* `discriminator-iterations`: number of iterations on each turn for the discriminator
+* `generator-lr`: learning rate for the generator
+* `discriminator-lr`: learning rate for the discriminator
+* `beta1`: first beta
+* `beta2`: second beta
+* `max-batches-per-epoch`: maximum number of minibatches per epoch
+
 ## Extending Ganzo
 
 Ganzo can be extended by defining your custom modules. To do this, you do not
