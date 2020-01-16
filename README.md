@@ -271,6 +271,31 @@ The module `discriminator` exports the following options:
 
 ### Loss
 
+This module defines classes that compute the loss functions both for the
+generator and the discriminator. The reason why they are coupled is that
+the loss function for the generator needs access to the discriminator anyway.
+
+The module `loss` defines the following classes:
+
+* `GANLoss`: the standard GAN loss from [1]
+* `WGANLoss`: the Wasserstein GAN loss from [2]
+* `WGANGPLoss` like WGAN, but uses gradient penalty instead of weight clipping [3]
+* `Pix2PixLoss`: the loss for Pix2Pix from [4]
+
+[1] https://arxiv.org/abs/1406.2661
+[2] https://arxiv.org/abs/1701.07875
+[3] https://arxiv.org/abs/1704.00028
+[4] https://arxiv.org/abs/1611.07004
+
+The module `loss` exports the following options:
+
+* `--loss`: the type of loss (`gan`, `wgan`, `wgan-gp` or `pix2pix`)
+* `--gradient-penalty-factor`: the gradient penalty factor (λ) in WGAN-GP
+* `--soft-labels`: if true, use soft labels in the GAN loss (randomly fudge the labels by at most 0.1)
+* `--noisy-labels`': if true, use noisy labels in the GAN loss (sometimes invert labels for the discriminator)
+* `--noisy-labels-frequency`: how often to invert labels for the discriminator
+* `--l1-weight`: weight of the L¹ distance contribution to the GAN loss
+
 ### Noise
 
 This modules defines classese that generate random noise. Most GAN generators
@@ -452,3 +477,22 @@ def add_my_custom_options(parser, train):
 ```
 
 ## Using Ganzo as a library
+
+All components in Ganzo are designed to be used together by configuration,
+but this is not a requirement by any means. If you want to write your custom
+training and inference scripts, and only need access to some of Ganzo's
+generators, discriminators, loss function and so on, this is easily doable.
+
+All classes need in the constructor an `options` parameter , which is an instance
+of [argparse.Namespace](https://docs.python.org/3/library/argparse.html#the-namespace-object).
+Other than that, you can just import and use the classes as needed. For example
+
+```python
+from argparse import Namespace
+from ganzo.generator import UGenerator
+
+options = Namespace()
+options.generator_layers = 5
+options.generator_channels = 3
+generator = UGenerator(options)
+```
