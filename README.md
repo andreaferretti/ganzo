@@ -354,6 +354,19 @@ The module `snapshot` defines the following options:
 
 ### Evaluation
 
+This module defines criteria that can be used to evaluate the quality of the
+produced images. Ganzo will save the model whenever these have improved.
+
+The module `evaluation` defines the following classes:
+
+* `Latest`: always returns true, thus letting Ganzo always save the latest models
+* `GeneratorLoss`: defines that evaluation has improved when the loss for the
+  generator decreases
+
+The module `evaluation` defines the following options:
+
+* `evaluation-criterion`: either `latest` or `generator-loss`
+
 ### Game
 
 ## Extending Ganzo
