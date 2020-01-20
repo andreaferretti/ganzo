@@ -15,6 +15,14 @@ The guiding principles are:
 * be usable as a library
 * allow for reproducible experiments
 
+## Experiments
+
+Some examples of configuration are available in the `experiments` folder,
+together with their output. For instance, a WGAN with gradient penalty running
+on the bedrooms dataset produces
+
+![wgan-gp-bedrooms](./experiments/4-wgan-gp-bedrooms.png)
+
 ## Installing
 
 The only hard dependencies for Ganzo are PyTorch and TorchVision. For instance,
@@ -270,6 +278,31 @@ The module `discriminator` exports the following options:
 
 ### Loss
 
+This module defines classes that compute the loss functions both for the
+generator and the discriminator. The reason why they are coupled is that
+the loss function for the generator needs access to the discriminator anyway.
+
+The module `loss` defines the following classes:
+
+* `GANLoss`: the standard GAN loss from [1]
+* `WGANLoss`: the Wasserstein GAN loss from [2]
+* `WGANGPLoss` like WGAN, but uses gradient penalty instead of weight clipping [3]
+* `Pix2PixLoss`: the loss for Pix2Pix from [4]
+
+[1] https://arxiv.org/abs/1406.2661
+[2] https://arxiv.org/abs/1701.07875
+[3] https://arxiv.org/abs/1704.00028
+[4] https://arxiv.org/abs/1611.07004
+
+The module `loss` exports the following options:
+
+* `--loss`: the type of loss (`gan`, `wgan`, `wgan-gp` or `pix2pix`)
+* `--gradient-penalty-factor`: the gradient penalty factor (λ) in WGAN-GP
+* `--soft-labels`: if true, use soft labels in the GAN loss (randomly fudge the labels by at most 0.1)
+* `--noisy-labels`': if true, use noisy labels in the GAN loss (sometimes invert labels for the discriminator)
+* `--noisy-labels-frequency`: how often to invert labels for the discriminator
+* `--l1-weight`: weight of the L¹ distance contribution to the GAN loss
+
 ### Noise
 
 This modules defines classese that generate random noise. Most GAN generators
@@ -328,7 +361,45 @@ The module `snapshot` defines the following options:
 
 ### Evaluation
 
+This module defines criteria that can be used to evaluate the quality of the
+produced images. Ganzo will save the model whenever these have improved.
+
+The module `evaluation` defines the following classes:
+
+* `Latest`: always returns true, thus letting Ganzo always save the latest models
+* `GeneratorLoss`: defines that evaluation has improved when the loss for the
+  generator decreases
+
+The module `evaluation` defines the following options:
+
+* `evaluation-criterion`: either `latest` or `generator-loss`
+
 ### Game
+
+This module defines classes that implement the actual GAN logic, which has a few
+variants.
+
+The module `game` defines the following classes:
+
+* `StandardGame`: the usual GAN game that opposes a generator, taking random
+  noise as input, and a discriminator to learn classify real and fake samples
+* `TranslateGame`: a game that uses the generator to perform an image translation
+  task. This is different from `StandardGame`, since the generator receives
+  as input real images from a given domain, and needs to produce as output
+  images in a different domain. The discriminator learns to classify real and
+  fake samples, but both are overlaid to the original input, in order to
+  evaluate the quality of the translation.
+
+The module `game` defines the following options:
+
+* `evaluation-criterion`: either `standard` or `translate`
+* `generator-iterations`: number of iterations on each turn for the generator
+* `discriminator-iterations`: number of iterations on each turn for the discriminator
+* `generator-lr`: learning rate for the generator
+* `discriminator-lr`: learning rate for the discriminator
+* `beta1`: first beta
+* `beta2`: second beta
+* `max-batches-per-epoch`: maximum number of minibatches per epoch
 
 ## Extending Ganzo
 
@@ -451,3 +522,22 @@ def add_my_custom_options(parser, train):
 ```
 
 ## Using Ganzo as a library
+
+All components in Ganzo are designed to be used together by configuration,
+but this is not a requirement by any means. If you want to write your custom
+training and inference scripts, and only need access to some of Ganzo's
+generators, discriminators, loss function and so on, this is easily doable.
+
+All classes need in the constructor an `options` parameter , which is an instance
+of [argparse.Namespace](https://docs.python.org/3/library/argparse.html#the-namespace-object).
+Other than that, you can just import and use the classes as needed. For example
+
+```python
+from argparse import Namespace
+from ganzo.generator import UGenerator
+
+options = Namespace()
+options.generator_layers = 5
+options.generator_channels = 3
+generator = UGenerator(options)
+```
