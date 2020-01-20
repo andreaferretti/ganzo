@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd "$DIR/.."
 
 python src/ganzo.py \
-  --experiment pix2pix-maps \
+  --experiment pix2pix-shoes \
   --game translate \
   --dataset folder \
   --data-dir $EDGES2SHOES \
