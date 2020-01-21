@@ -44,6 +44,34 @@ class GaussianNoise:
         '''
         return torch.randn(self.batch_size, self.state_size).to(self.device)
 
+@register('noise', 'uniform')
+class UniformNoise:
+    '''
+    A generator of uniform noise between -1 and 1. Yields batches of noise having shape
+
+        B x S
+
+    where
+    * B is the batch size
+    * S is the state size
+
+    Generated data is already moved to the appropriate device.
+
+    The following options can be used to configure it:
+
+    --state-size: the dimensionality of the noise space.
+    '''
+    def __init__(self, options):
+        self.state_size = options.state_size
+        self.batch_size = options.batch_size
+        self.device = options.device
+
+    def next(self):
+        '''
+        Yields a batch of noise.
+        '''
+        return torch.rand(self.batch_size, self.state_size).to(self.device) * 2 - 1
+
 class Noise:
     @staticmethod
     def from_options(options):

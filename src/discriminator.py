@@ -18,6 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from registry import Registry, RegistryError, register, with_option_parser
+from models import Upsampler, Downsampler
 
 
 @register('discriminator', 'fc', default=True)
@@ -265,6 +266,45 @@ class PatchGANDiscriminator(nn.Module):
         x = F.sigmoid(self.conv5(x))
         return torch.mean(torch.mean(x, dim=3), dim=2).squeeze()
 
+@register('discriminator', 'autoencoder')
+class AutoencoderDiscriminator(nn.Module):
+    '''
+    Discriminator from
+        David Berthelot, Thomas Schumm, Luke Metz
+        BEGAN: Boundary Equilibrium GenerativeAdversarial Networks
+        https://arxiv.org/abs/1703.10717
+    '''
+    def __init__(self, options):
+        super().__init__()
+        upsamples = options.discriminator_upsamples
+        scale_factor = 2 ** upsamples
+        if options.image_size % scale_factor != 0:
+            raise ValueError(f'Image size must be multiple of 2^{upsamples}')
+        size = options.image_size // scale_factor
+
+        self.encoder = Downsampler(
+            layers=options.discriminator_layers,
+            channels=options.discriminator_channels,
+            downsamples=options.discriminator_upsamples,
+            image_size=options.image_size,
+            target_size=size,
+            dropout=options.discriminator_dropout
+        )
+        self.decoder = Upsampler(
+            layers=options.discriminator_layers,
+            channels=options.discriminator_channels,
+            upsamples=options.discriminator_upsamples,
+            image_size=options.image_size,
+            input_size=size,
+            dropout=options.discriminator_dropout
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return torch.dist(x, decoded)
+
+
 class Discriminator:
     @staticmethod
     def from_options(options):
@@ -289,3 +329,4 @@ class Discriminator:
         group.add_argument('--discriminator-dropout', type=float, help='dropout coefficient in discriminator layers')
         group.add_argument('--discriminator-layers', type=int, default=4, help='number of discriminator layers')
         group.add_argument('--discriminator-channels', type=int, default=4, help='number of channels for the discriminator')
+        group.add_argument('--discriminator-upsamples', type=int, default=2, help='number of times the discriminator performs an upsample')

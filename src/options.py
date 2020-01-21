@@ -33,6 +33,7 @@ class Options:
         self.parser.add_argument('--device', help='device name, leave blank to autodetect')
         self.parser.add_argument('--seed', type=int, help='random number generator seed')
         self.parser.add_argument('--start-epoch', type=int, default=1, help='start counting from this epoch')
+        self.parser.add_argument('--print-models', action=YesNoAction, help='print models at startup')
         if train:
             self.parser.add_argument('--from-json', help='load configuration from this JSON file')
             self.parser.add_argument('--parallel', action=YesNoAction, help='train in parallel')

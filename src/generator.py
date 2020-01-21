@@ -18,6 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from registry import Registry, RegistryError, register, with_option_parser
+from models import Upsampler
 
 
 @register('generator', 'fc', default=True)
@@ -303,6 +304,63 @@ class UGenerator(nn.Module):
         y_out = self.deconv_out(F.relu(torch.cat((y, x_in), dim=1)))
         return F.tanh(y_out)
 
+@register('generator', 'upsampling')
+class UpsamplingGenerator(nn.Module):
+    '''
+    Generator from
+        David Berthelot, Thomas Schumm, Luke Metz
+        BEGAN: Boundary Equilibrium GenerativeAdversarial Networks
+        https://arxiv.org/abs/1703.10717
+    '''
+    def __init__(self, options):
+        super().__init__()
+        self.upsampler = Upsampler(
+            layers=options.generator_layers,
+            channels=options.generator_channels,
+            upsamples=options.generator_upsamples,
+            image_size=options.image_size,
+            input_size=options.state_size,
+            dropout=options.generator_dropout
+        )
+        # channels = options.generator_channels
+        # upsamples = options.generator_upsamples
+        # scale_factor = 2 ** upsamples
+        # if options.image_size % scale_factor != 0:
+        #     raise ValueError(f'Image size must be multiple of 2^{upsamples}')
+        # if (options.generator_layers - 1) % (upsamples + 1) != 0:
+        #     raise ValueError(f'Number of generator layers - 1 must be multiple of {upsamples + 1}')
+        # size = options.image_size // scale_factor
+        # layers_per_upsample = (options.generator_layers - 1) // (upsamples + 1) - 1
+
+        # self.initial_size = size
+        # self.channels = channels
+        # self.dropout = options.generator_dropout
+        # self.fc = nn.Linear(options.state_size, size * size * channels)
+        # self.layers = []
+        # for i in range(upsamples + 1):
+        #     for j in range(layers_per_upsample):
+        #         layer = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1)
+        #         self.add_module(f'conv_{i}_{j}', layer)
+        #         self.layers.append(layer)
+        #     if i < upsamples:
+        #         layer = nn.Upsample(scale_factor=2, mode='nearest')
+        #         self.add_module(f'upsample_{i}', layer)
+        #         self.layers.append(layer)
+
+        # self.final_conv = nn.Conv2d(channels, 3, kernel_size=3, stride=1, padding=1)
+
+    def forward(self, x):
+        return self.upsampler(x)
+        # x = self.fc(x)
+        # x = x.view(-1, self.channels, self.initial_size, self.initial_size)
+        # for layer in self.layers:
+        #     x = layer(x)
+        #     x = F.elu(x)
+        #     if self.dropout is not None:
+        #         x = F.dropout(x, self.dropout)
+        # x = self.final_conv(x)
+        # return x
+
 class Generator:
     @staticmethod
     def from_options(options):
@@ -327,3 +385,4 @@ class Generator:
         group.add_argument('--generator-dropout', type=float, help='dropout coefficient in generator layers')
         group.add_argument('--generator-layers', type=int, default=4, help='number of generator layers')
         group.add_argument('--generator-channels', type=int, default=8, help='number of channels for the generator')
+        group.add_argument('--generator-upsamples', type=int, default=2, help='number of times the generator performs an upsample')

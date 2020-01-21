@@ -83,6 +83,12 @@ if __name__ == '__main__':
     evaluation = Evaluation.from_options(options)
     game = Game.from_options(options, generator, discriminator, loss, hooks)
 
+    if options.print_models:
+        print('-Generator-')
+        print(generator)
+        print('-Discriminator-')
+        print(discriminator)
+
     for _ in range(options.epochs):
         losses = game.run_epoch(data, noise)
         statistics.log(losses)

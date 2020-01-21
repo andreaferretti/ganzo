@@ -148,6 +148,27 @@ class Pix2PixLoss(LossWithLabels):
         fake = self.cross_entropy(self.discriminator(fake_data), fake_labels)
         return real + fake
 
+@register('loss', 'ebgan')
+class EBGANLoss:
+    '''
+    EBGAN loss from
+        Junbo Zhao, Michael Mathieu and Yann LeCun
+        Energy-based Generative Adversarial Networks
+        https://arxiv.org/abs/1609.03126
+    '''
+    def __init__(self, options, discriminator):
+        self.device = torch.device(options.device)
+        self.discriminator = discriminator
+        self.threshold = options.ebgan_threshold
+
+    def for_generator(self, fake_data, target=None):
+        return self.discriminator(fake_data).mean()
+
+    def for_discriminator(self, real_data, fake_data, target=None):
+        real = self.discriminator(real_data).mean()
+        fake = (self.threshold - self.discriminator(fake_data)).clamp_min(0).mean()
+        return real + fake
+
 class Loss:
     @staticmethod
     def from_options(options, discriminator):
@@ -168,3 +189,4 @@ class Loss:
             group.add_argument('--noisy-labels', action=YesNoAction, help='use noisy labels in GAN loss')
             group.add_argument('--noisy-labels-frequency', type=float, default=0.1, help='how often to use noisy labels in GAN loss')
             group.add_argument('--l1-weight', type=float, default=1, help='weight of the L1 distance contribution to the GAN loss')
+            group.add_argument('--ebgan-threshold', type=float, default=1, help='threshold (m) in the EBGAN loss')
