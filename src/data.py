@@ -71,7 +71,13 @@ class SingleImage:
             LSUN: Construction of a Large-scale Image Dataset using Deep Learning with Humans in the Loop
             https://arxiv.org/abs/1506.03365
 
-            and is available on https://www.yf.io/p/lsun
+        * `cifar10`, `cifar100` expects the CIFAR 10/100 database. These datasets are introduced in
+
+            Alex Krizhevsky
+            Learning Multiple Layers of Features from Tiny Images
+            http://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
+
+            and are available on http://www.cs.toronto.edu/~kriz/cifar.html
         * `folder` expects a folder of images structured as follows
 
             base-folder
@@ -116,6 +122,10 @@ class SingleImage:
         elif options.dataset == 'lsun':
             training_class = options.image_class + '_train'
             dataset =  datasets.LSUN(options.data_dir, classes=[training_class], transform=transform)
+        elif options.dataset == 'cifar10':
+            dataset = datasets.CIFAR10(options.data_dir, train=True, download=True, transform=transform)
+        elif options.dataset == 'cifar100':
+            dataset = datasets.CIFAR100(options.data_dir, train=True, download=True, transform=transform)
         else:
             dataset = datasets.ImageFolder(root=options.data_dir, transform=transform)
 
@@ -258,7 +268,7 @@ class Data:
         group = parser.add_argument_group('data loading')
         group.add_argument('--data-format', choices=Registry.keys('data'), default=Registry.default('data'), help='type of dataset')
         group.add_argument('--data-dir', default='data', help='directory with the images')
-        group.add_argument('--dataset', choices=['folder', 'mnist', 'emnist', 'fashion-mnist', 'lsun'], default='folder', help='source of the dataset')
+        group.add_argument('--dataset', choices=['folder', 'mnist', 'emnist', 'fashion-mnist', 'lsun', 'cifar10', 'cifar100'], default='folder', help='source of the dataset')
         group.add_argument('--image-class', help='class to train on, only for some datasets')
         group.add_argument('--image-size', type=int, default=64, help='image dimension')
         group.add_argument('--image-colors', type=int, default=3, help='image colors')
