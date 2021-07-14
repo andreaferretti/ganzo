@@ -18,8 +18,8 @@ from hashlib import sha1
 
 import torch
 
-from registry import Registry
-from utils import YesNoAction
+from ganzo.registry import Registry
+from ganzo.utils import YesNoAction
 
 
 def _name(options):

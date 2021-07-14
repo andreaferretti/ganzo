@@ -4,7 +4,7 @@ set -u
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 cd "$DIR/.."
 
-python src/ganzo.py \
+python src/ganzo/ganzo.py \
   --experiment dcgan-fashion-mnist \
   --dataset fashion-mnist \
   --data-dir images/fashion-mnist \

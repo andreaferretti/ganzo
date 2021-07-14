@@ -13,7 +13,7 @@
 # limitations under the License.
 import math
 
-from registry import Registry, RegistryError, register, with_option_parser
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('evaluation', 'latest', default=True)

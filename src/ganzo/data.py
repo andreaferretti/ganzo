@@ -16,8 +16,8 @@ import os
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
 
-from registry import Registry, RegistryError, register, with_option_parser
-from utils import YesNoAction
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
+from ganzo.utils import YesNoAction
 
 
 @register('data', 'single-image', default=True)

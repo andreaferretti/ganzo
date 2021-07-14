@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-from registry import Registry, RegistryError, register, with_option_parser
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('noise', 'gaussian', default=True)

@@ -18,8 +18,8 @@ import importlib
 import torch
 import torchvision
 
-from registry import Registry, RegistryError, register, with_option_parser
-from utils import YesNoAction
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
+from ganzo.utils import YesNoAction
 
 class BaseSnapshot:
     def __init__(self, options):

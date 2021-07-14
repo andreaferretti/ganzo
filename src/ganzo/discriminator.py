@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from registry import Registry, RegistryError, register, with_option_parser
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('discriminator', 'fc', default=True)
@@ -205,9 +205,10 @@ class GoodDiscriminator(nn.Module):
         side = options.image_size
 
         self.image_size = options.image_size
+        self.image_colors = options.image_colors
         self.start = start
 
-        self.conv = nn.Conv2d(3, side, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv = nn.Conv2d(self.image_colors, side, kernel_size=3, stride=1, padding=1, bias=True)
         self.rb1 = ResidualBlock(1 * side, 2 * side, 3, hw=side) # <--- check whether to use `side` or `64`
         self.rb2 = ResidualBlock(2 * side, 4 * side, 3, hw=int(side / 2))
         self.rb3 = ResidualBlock(4 * side, 8 * side, 3, hw=int(side / 4))
@@ -219,7 +220,7 @@ class GoodDiscriminator(nn.Module):
 
     def forward(self, x):
         batch_size = x.size()[0]
-        x = x.contiguous().view(batch_size, 3, self.image_size, self.image_size)
+        x = x.contiguous().view(batch_size, self.image_colors, self.image_size, self.image_size)
         x = self.conv(x)
         x = self.rb1(x)
         x = self.rb2(x)

@@ -16,17 +16,17 @@ import sys
 
 import torch
 
-from data import Data
-from generator import Generator
-from discriminator import Discriminator
-from loss import Loss
-from noise import Noise
-from hook import Hook
-from statistics import Statistics
-from snapshot import Snapshot
-from evaluation import Evaluation
-from game import Game
-from options import Options
+from ganzo.data import Data
+from ganzo.generator import Generator
+from ganzo.discriminator import Discriminator
+from ganzo.loss import Loss
+from ganzo.noise import Noise
+from ganzo.hook import Hook
+from ganzo.statistics import Statistics
+from ganzo.snapshot import Snapshot
+from ganzo.evaluation import Evaluation
+from ganzo.game import Game
+from ganzo.options import Options
 
 
 if __name__ == '__main__':

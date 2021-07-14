@@ -15,7 +15,7 @@ import os
 import importlib
 from timeit import default_timer as timer
 
-from registry import Registry, RegistryError, register, with_option_parser
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('log', 'none')

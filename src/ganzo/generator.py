@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from registry import Registry, RegistryError, register, with_option_parser
+from ganzo.registry import Registry, RegistryError, register, with_option_parser
 
 
 @register('generator', 'fc', default=True)
@@ -222,15 +222,16 @@ class GoodGenerator(nn.Module):
         side = options.image_size
 
         self.image_size = options.image_size
+        self.image_colors = options.image_colors
         self.start = start
 
         self.fc = nn.Linear(options.state_size, start * start * 8 * side)
-        self.rb1 = ResidualBlock(8 * side, 8 * side, 3)
-        self.rb2 = ResidualBlock(8 * side, 4 * side, 3)
-        self.rb3 = ResidualBlock(4 * side, 2 * side, 3)
-        self.rb4 = ResidualBlock(2 * side, 1 * side, 3)
+        self.rb1 = ResidualBlock(8 * side, 8 * side, self.image_colors)
+        self.rb2 = ResidualBlock(8 * side, 4 * side, self.image_colors)
+        self.rb3 = ResidualBlock(4 * side, 2 * side, self.image_colors)
+        self.rb4 = ResidualBlock(2 * side, 1 * side, self.image_colors)
         self.batch_norm = nn.BatchNorm2d(side)
-        self.conv = nn.Conv2d(side, 3, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv = nn.Conv2d(side, self.image_colors, kernel_size=3, stride=1, padding=1, bias=True)
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
 
@@ -249,7 +250,7 @@ class GoodGenerator(nn.Module):
         x = self.relu(x)
         x = self.conv(x)
         x = self.tanh(x)
-        return x.view(batch_size, 3, self.image_size, self.image_size)
+        return x.view(batch_size, self.image_colors, self.image_size, self.image_size)
 
 @register('generator', 'u-gen')
 class UGenerator(nn.Module):
